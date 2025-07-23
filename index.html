@@ -8,13 +8,26 @@
       font-family: Arial, sans-serif;
       padding: 20px;
     }
-    input {
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
       margin-bottom: 10px;
+    }
+    input {
       padding: 8px;
-      width: 100%;
-      max-width: 400px;
+      width: 300px;
       border: 2px solid #333;
       font-size: 16px;
+    }
+    .stats {
+      border: 1px solid #ccc;
+      padding: 10px;
+      font-size: 14px;
+      max-width: 250px;
+    }
+    .stats h4 {
+      margin: 5px 0;
     }
     .table-container {
       height: 300px;
@@ -50,8 +63,20 @@
   </style>
 </head>
 <body>
-  <h2>Buscador de Datos</h2>
-  <input type="text" id="searchInput" placeholder="Buscar...">
+  <div class="header">
+    <div>
+      <h2>Buscador de Datos</h2>
+      <input type="text" id="searchInput" placeholder="Buscar por RUT o nombre...">
+    </div>
+    <div class="stats">
+      <h4>📊 Estadísticas</h4>
+      <p><b>Total registros:</b> <span id="totalRegistros">0</span></p>
+      <p><b>A eliminar:</b> <span id="totalEliminar">0</span></p>
+      <h4>📅 Última atención por año:</h4>
+      <ul id="conteoPorAno"></ul>
+    </div>
+  </div>
+
   <div class="table-container">
     <table id="dataTable"></table>
   </div>
@@ -67,18 +92,12 @@
     const query = encodeURIComponent("SELECT A, B, C, D, E, F, G, H, I");
     const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=${sheetName}&tq=${query}`;
 
-    // ✅ Función compatible con fechas dd-mm-aa y dd-mm-aaaa
     function parseFecha(fechaStr) {
       const partes = fechaStr.split("-");
       if (partes.length !== 3) return null;
-
       let [dd, mm, aa] = partes;
       let year = parseInt(aa);
-
-      if (year < 100) {
-        year += (year < 25) ? 2000 : 1900;
-      }
-
+      if (year < 100) year += (year < 25) ? 2000 : 1900;
       return new Date(year, parseInt(mm) - 1, parseInt(dd));
     }
 
@@ -86,19 +105,22 @@
       .then(res => res.text())
       .then(rep => {
         const data = JSON.parse(rep.substr(47).slice(0, -2));
-
         const table = document.getElementById("dataTable");
         const eliminarTable = document.getElementById("eliminarTable");
         const tbody = document.createElement("tbody");
         const eliminarBody = document.createElement("tbody");
 
-        // Crear encabezado
+        // Encabezados
         const headers = data.table.cols.map(col => `<th>${col.label || ""}</th>`).join('');
         table.innerHTML = `<thead><tr>${headers}</tr></thead>`;
         eliminarTable.innerHTML = `<thead><tr>${headers}</tr></thead>`;
 
         const hoy = new Date();
         const hace15 = new Date(hoy.getFullYear() - 15, hoy.getMonth(), hoy.getDate());
+
+        let total = 0;
+        let totalEliminar = 0;
+        const conteoPorAno = {};
 
         data.table.rows.forEach(row => {
           const cells = row.c.map(cell => {
@@ -110,18 +132,39 @@
           tr.innerHTML = cells.join('');
           tbody.appendChild(tr);
 
-          // Evaluar si debe ir a la tabla de eliminación
+          total++;
+
+          // Validación
           const fechaUltima = (row.c[4] && (row.c[4].f || row.c[4].v)) || '';
           const fechaParsed = parseFecha(fechaUltima);
+
+          if (fechaParsed) {
+            const year = fechaParsed.getFullYear();
+            conteoPorAno[year] = (conteoPorAno[year] || 0) + 1;
+          }
+
           if (fechaParsed && fechaParsed <= hace15) {
             const tr2 = document.createElement("tr");
             tr2.innerHTML = cells.join('');
             eliminarBody.appendChild(tr2);
+            totalEliminar++;
           }
         });
 
         table.appendChild(tbody);
         eliminarTable.appendChild(eliminarBody);
+
+        // Actualizar contadores
+        document.getElementById("totalRegistros").textContent = total;
+        document.getElementById("totalEliminar").textContent = totalEliminar;
+
+        const ul = document.getElementById("conteoPorAno");
+        const anosOrdenados = Object.keys(conteoPorAno).sort((a, b) => b - a);
+        anosOrdenados.forEach(year => {
+          const li = document.createElement("li");
+          li.textContent = `${year}: ${conteoPorAno[year]}`;
+          ul.appendChild(li);
+        });
 
         // Buscador
         const input = document.getElementById("searchInput");
