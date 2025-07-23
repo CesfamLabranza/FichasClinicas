@@ -7,73 +7,152 @@
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
+      margin: 0;
     }
-    .header {
+
+    .header-inline {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 20px;
     }
-    input {
+
+    .search-box {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .search-box input {
       padding: 8px;
       width: 300px;
       border: 2px solid #333;
       font-size: 16px;
     }
-    .stats {
-      border: 1px solid #ccc;
-      padding: 10px;
+
+    .stats-box {
+      border: 2px solid #ccc;
+      padding: 10px 15px;
+      border-radius: 8px;
+      background: #f9f9f9;
+      min-width: 420px;
+    }
+
+    .stats-box h3 {
+      margin: 0 0 10px 0;
+      font-size: 16px;
+    }
+
+    .stats-inline {
+      display: flex;
+      gap: 15px;
       font-size: 14px;
-      max-width: 250px;
+      flex-wrap: wrap;
+      white-space: nowrap;
     }
-    .stats h4 {
-      margin: 5px 0;
+
+    .stats-inline span {
+      background: #fff;
+      padding: 6px 10px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      font-weight: 500;
     }
+
+    /* Colores */
+    .stats-inline .total {
+      color: #155724;
+      background-color: #d4edda;
+      border: 1px solid #c3e6cb;
+    }
+
+    .stats-inline .eliminar {
+      color: #721c24;
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+    }
+
+    .stats-inline .anios {
+      color: #004085;
+      background-color: #cce5ff;
+      border: 1px solid #b8daff;
+    }
+
     .table-container {
       height: 300px;
       overflow: auto;
       border: 1px solid #ccc;
       margin-bottom: 30px;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
       font-size: 12px;
     }
+
     th, td {
       border: 1px solid #ddd;
       padding: 4px 6px;
       text-align: left;
     }
+
     tr.hide {
       display: none;
     }
+
     tr:nth-child(even) {
       background-color: #f9f9f9;
     }
+
     th {
       background-color: #333;
       color: white;
       position: sticky;
       top: 0;
     }
+
     h3 {
       margin-top: 40px;
+    }
+
+    /* Botón alineado a la derecha */
+    .btn-container {
+      text-align: right;
+      margin: 20px 20px 0 0;
+    }
+
+    .link-btn {
+      display: inline-block;
+      background-color: #007bff;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: bold;
+      transition: background 0.3s ease;
+    }
+
+    .link-btn:hover {
+      background-color: #0056b3;
     }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div>
+  <div class="header-inline">
+    <div class="search-box">
       <h2>Buscador de Datos</h2>
       <input type="text" id="searchInput" placeholder="Buscar por RUT o nombre...">
     </div>
-    <div class="stats">
-      <h4>📊 Estadísticas</h4>
-      <p><b>Total registros:</b> <span id="totalRegistros">0</span></p>
-      <p><b>A eliminar:</b> <span id="totalEliminar">0</span></p>
-      <h4>📅 Última atención por año:</h4>
-      <ul id="conteoPorAno"></ul>
+    <div class="stats-box">
+      <h3>📌 Cantidades</h3>
+      <div class="stats-inline">
+        <span class="total">📊 <b>Total:</b> <span id="totalRegistros">0</span></span>
+        <span class="eliminar">❌ <b>A eliminar:</b> <span id="totalEliminar">0</span></span>
+        <span class="anios">📅 <b>Años:</b> <span id="conteoPorAno"></span></span>
+      </div>
     </div>
   </div>
 
@@ -84,6 +163,12 @@
   <h3>Registros con más de 15 años sin atención (para eliminar):</h3>
   <div class="table-container">
     <table id="eliminarTable"></table>
+  </div>
+
+  <!-- Botón en esquina inferior derecha (al final) -->
+  <div class="btn-container">
+    <a href="https://docs.google.com/spreadsheets/d/1r4oZdMkehQZmUX87nK8-bxMwxk-3a70XUfYV-V0QaBM/edit?usp=sharing"
+       target="_blank" class="link-btn">📂 Ver Planilla Completa</a>
   </div>
 
   <script>
@@ -110,7 +195,7 @@
         const tbody = document.createElement("tbody");
         const eliminarBody = document.createElement("tbody");
 
-        // Encabezados
+        // Crear encabezados
         const headers = data.table.cols.map(col => `<th>${col.label || ""}</th>`).join('');
         table.innerHTML = `<thead><tr>${headers}</tr></thead>`;
         eliminarTable.innerHTML = `<thead><tr>${headers}</tr></thead>`;
@@ -131,10 +216,9 @@
           const tr = document.createElement("tr");
           tr.innerHTML = cells.join('');
           tbody.appendChild(tr);
-
           total++;
 
-          // Validación
+          // Validación de fecha
           const fechaUltima = (row.c[4] && (row.c[4].f || row.c[4].v)) || '';
           const fechaParsed = parseFecha(fechaUltima);
 
@@ -158,13 +242,10 @@
         document.getElementById("totalRegistros").textContent = total;
         document.getElementById("totalEliminar").textContent = totalEliminar;
 
-        const ul = document.getElementById("conteoPorAno");
+        // Mostrar años en línea
         const anosOrdenados = Object.keys(conteoPorAno).sort((a, b) => b - a);
-        anosOrdenados.forEach(year => {
-          const li = document.createElement("li");
-          li.textContent = `${year}: ${conteoPorAno[year]}`;
-          ul.appendChild(li);
-        });
+        document.getElementById("conteoPorAno").textContent =
+          anosOrdenados.map(year => `${year}(${conteoPorAno[year]})`).join(', ');
 
         // Buscador
         const input = document.getElementById("searchInput");
