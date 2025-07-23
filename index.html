@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Buscador de Planilla</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    input {
+      margin-bottom: 10px;
+      padding: 8px;
+      width: 100%;
+      max-width: 400px;
+      border: 2px solid #333;
+      font-size: 16px;
+    }
+    .table-container {
+      height: 300px;
+      overflow: auto;
+      border: 1px solid #ccc;
+      margin-bottom: 30px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 4px 6px;
+      text-align: left;
+    }
+    tr.hide {
+      display: none;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    th {
+      background-color: #333;
+      color: white;
+      position: sticky;
+      top: 0;
+    }
+    h3 {
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Buscador de Datos</h2>
+  <input type="text" id="searchInput" placeholder="Buscar...">
+  <div class="table-container">
+    <table id="dataTable"></table>
+  </div>
+
+  <h3>Registros con más de 15 años sin atención (para eliminar):</h3>
+  <div class="table-container">
+    <table id="eliminarTable"></table>
+  </div>
+
+  <script>
+    const sheetID = "1r4oZdMkehQZmUX87nK8-bxMwxk-3a70XUfYV-V0QaBM";
+    const sheetName = "Hoja 1";
+    const query = encodeURIComponent("SELECT A, B, C, D, E, F, G, H, I");
+    const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=${sheetName}&tq=${query}`;
+
+    // ✅ Función compatible con fechas dd-mm-aa y dd-mm-aaaa
+    function parseFecha(fechaStr) {
+      const partes = fechaStr.split("-");
+      if (partes.length !== 3) return null;
+
+      let [dd, mm, aa] = partes;
+      let year = parseInt(aa);
+
+      if (year < 100) {
+        year += (year < 25) ? 2000 : 1900;
+      }
+
+      return new Date(year, parseInt(mm) - 1, parseInt(dd));
+    }
+
+    fetch(url)
+      .then(res => res.text())
+      .then(rep => {
+        const data = JSON.parse(rep.substr(47).slice(0, -2));
+
+        const table = document.getElementById("dataTable");
+        const eliminarTable = document.getElementById("eliminarTable");
+        const tbody = document.createElement("tbody");
+        const eliminarBody = document.createElement("tbody");
+
+        // Crear encabezado
+        const headers = data.table.cols.map(col => `<th>${col.label || ""}</th>`).join('');
+        table.innerHTML = `<thead><tr>${headers}</tr></thead>`;
+        eliminarTable.innerHTML = `<thead><tr>${headers}</tr></thead>`;
+
+        const hoy = new Date();
+        const hace15 = new Date(hoy.getFullYear() - 15, hoy.getMonth(), hoy.getDate());
+
+        data.table.rows.forEach(row => {
+          const cells = row.c.map(cell => {
+            const value = (cell && (cell.f || cell.v)) || '';
+            return `<td>${value}</td>`;
+          });
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = cells.join('');
+          tbody.appendChild(tr);
+
+          // Evaluar si debe ir a la tabla de eliminación
+          const fechaUltima = (row.c[4] && (row.c[4].f || row.c[4].v)) || '';
+          const fechaParsed = parseFecha(fechaUltima);
+          if (fechaParsed && fechaParsed <= hace15) {
+            const tr2 = document.createElement("tr");
+            tr2.innerHTML = cells.join('');
+            eliminarBody.appendChild(tr2);
+          }
+        });
+
+        table.appendChild(tbody);
+        eliminarTable.appendChild(eliminarBody);
+
+        // Buscador
+        const input = document.getElementById("searchInput");
+        input.addEventListener("keyup", function () {
+          const filter = input.value.toLowerCase();
+          const rows = tbody.getElementsByTagName("tr");
+          for (let i = 0; i < rows.length; i++) {
+            const cells = rows[i].getElementsByTagName("td");
+            const match = Array.from(cells).some(td =>
+              td.textContent.toLowerCase().includes(filter)
+            );
+            rows[i].classList.toggle("hide", !match);
+          }
+        });
+      });
+  </script>
+</body>
+</html>
