@@ -264,10 +264,10 @@
       }
     }
 
-    // === Código para cargar datos ===
+    // === Cargar datos ===
     const sheetID = "1r4oZdMkehQZmUX87nK8-bxMwxk-3a70XUfYV-V0QaBM";
     const sheetName = "Hoja 1";
-    const query = encodeURIComponent("SELECT A, B, C, D, E, F, G");
+    const query = encodeURIComponent("SELECT A, B, C, D, E, F, G, H"); // Ahora 8 columnas
     const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=${sheetName}&tq=${query}`;
 
     function parseFecha(fechaStr) {
@@ -288,7 +288,6 @@
         const tbody = document.createElement("tbody");
         const eliminarBody = document.createElement("tbody");
 
-        // Crear encabezados
         const headers = data.table.cols.map(col => `<th>${col.label || ""}</th>`).join('');
         table.innerHTML = `<thead><tr>${headers}</tr></thead>`;
         eliminarTable.innerHTML = `<thead><tr>${headers}</tr></thead>`;
@@ -374,7 +373,7 @@
       const rows = document.querySelectorAll("#dataTable tbody tr");
 
       rows.forEach(row => {
-        const rutCell = row.querySelector("td:nth-child(2)");
+        const rutCell = row.querySelector("td:nth-child(2)"); // Columna RUT
         if (!rutCell) return;
 
         const rutTexto = limpiarFormato(rutCell.textContent);
