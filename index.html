@@ -19,6 +19,11 @@
       gap: 20px;
     }
 
+    .search-box {
+      display: flex;
+      flex-direction: column;
+    }
+
     .search-box input {
       padding: 8px;
       width: 300px;
@@ -32,6 +37,11 @@
       border-radius: 8px;
       background: #f9f9f9;
       min-width: 420px;
+    }
+
+    .stats-box h3 {
+      margin: 0 0 10px 0;
+      font-size: 16px;
     }
 
     .stats-inline {
@@ -53,16 +63,19 @@
     .stats-inline .total {
       color: #155724;
       background-color: #d4edda;
+      border: 1px solid #c3e6cb;
     }
 
     .stats-inline .eliminar {
       color: #721c24;
       background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
     }
 
     .stats-inline .anios {
       color: #004085;
       background-color: #cce5ff;
+      border: 1px solid #b8daff;
     }
 
     .table-container {
@@ -84,11 +97,23 @@
       text-align: left;
     }
 
+    tr.hide {
+      display: none;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
     th {
       background-color: #333;
       color: white;
       position: sticky;
       top: 0;
+    }
+
+    h3 {
+      margin-top: 40px;
     }
 
     .btn-container {
@@ -97,6 +122,7 @@
     }
 
     .link-btn {
+      display: inline-block;
       background-color: #007bff;
       color: white;
       padding: 12px 20px;
@@ -104,15 +130,15 @@
       text-decoration: none;
       font-size: 16px;
       font-weight: bold;
-      border: none;
       cursor: pointer;
+      border: none;
     }
 
     .link-btn:hover {
       background-color: #0056b3;
     }
 
-    /* Modal */
+    /* Modal Styles */
     .modal {
       display: none;
       position: fixed;
@@ -132,6 +158,11 @@
       border-radius: 8px;
       width: 300px;
       text-align: center;
+      box-shadow: 0px 4px 8px rgba(0,0,0,0.3);
+    }
+
+    .modal-content h4 {
+      margin-bottom: 15px;
     }
 
     .modal-content input {
@@ -142,24 +173,23 @@
       border-radius: 4px;
     }
 
-    .btn-confirm {
-      background: #28a745;
-      color: white;
+    .modal-content button {
       padding: 8px 14px;
       margin: 5px;
       border: none;
       border-radius: 4px;
+      font-size: 14px;
       cursor: pointer;
+    }
+
+    .btn-confirm {
+      background: #28a745;
+      color: white;
     }
 
     .btn-cancel {
       background: #dc3545;
       color: white;
-      padding: 8px 14px;
-      margin: 5px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
     }
 
     .error {
@@ -172,8 +202,8 @@
 <body>
   <div class="header-inline">
     <div class="search-box">
-      <h2>Buscador de Datos</h2>
-      <input type="text" id="searchInput" placeholder="Buscar por RUT o nombre...">
+      <h2>Buscar por RUT</h2>
+      <input type="text" id="searchInput" placeholder="Ej: 12.345.678-K">
     </div>
     <div class="stats-box">
       <h3>📌 Cantidades</h3>
@@ -234,9 +264,10 @@
       }
     }
 
+    // === Código para cargar datos ===
     const sheetID = "1r4oZdMkehQZmUX87nK8-bxMwxk-3a70XUfYV-V0QaBM";
     const sheetName = "Hoja 1";
-    const query = encodeURIComponent("SELECT A, B, C, D, E, F, G, H, I");
+    const query = encodeURIComponent("SELECT A, B, C, D, E, F, G");
     const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=${sheetName}&tq=${query}`;
 
     function parseFecha(fechaStr) {
@@ -257,10 +288,8 @@
         const tbody = document.createElement("tbody");
         const eliminarBody = document.createElement("tbody");
 
-        // Encabezados sin columna Ficha (index 2)
-        const headers = data.table.cols
-          .map((col, index) => index === 2 ? '' : `<th>${col.label || ""}</th>`)
-          .join('');
+        // Crear encabezados
+        const headers = data.table.cols.map(col => `<th>${col.label || ""}</th>`).join('');
         table.innerHTML = `<thead><tr>${headers}</tr></thead>`;
         eliminarTable.innerHTML = `<thead><tr>${headers}</tr></thead>`;
 
@@ -272,8 +301,7 @@
         const conteoPorAno = {};
 
         data.table.rows.forEach(row => {
-          const cells = row.c.map((cell, index) => {
-            if (index === 2) return ''; // Ocultamos columna Ficha
+          const cells = row.c.map(cell => {
             const value = (cell && (cell.f || cell.v)) || '';
             return `<td>${value}</td>`;
           });
@@ -283,7 +311,7 @@
           tbody.appendChild(tr);
           total++;
 
-          const fechaUltima = (row.c[4] && (row.c[4].f || row.c[4].v)) || '';
+          const fechaUltima = (row.c[3] && (row.c[3].f || row.c[3].v)) || '';
           const fechaParsed = parseFecha(fechaUltima);
 
           if (fechaParsed) {
@@ -308,20 +336,51 @@
         const anosOrdenados = Object.keys(conteoPorAno).sort((a, b) => b - a);
         document.getElementById("conteoPorAno").textContent =
           anosOrdenados.map(year => `${year}(${conteoPorAno[year]})`).join(', ');
-
-        const input = document.getElementById("searchInput");
-        input.addEventListener("keyup", function () {
-          const filter = input.value.toLowerCase();
-          const rows = tbody.getElementsByTagName("tr");
-          for (let i = 0; i < rows.length; i++) {
-            const cells = rows[i].getElementsByTagName("td");
-            const match = Array.from(cells).some(td =>
-              td.textContent.toLowerCase().includes(filter)
-            );
-            rows[i].classList.toggle("hide", !match);
-          }
-        });
       });
+
+    // === Buscador SOLO por RUT con formato automático ===
+    const input = document.getElementById("searchInput");
+
+    function limpiarFormato(texto) {
+      return texto.replace(/\./g, '').replace(/-/g, '').toLowerCase();
+    }
+
+    function formatearRut(rut) {
+      rut = rut.replace(/\./g, '').replace(/-/g, '').toUpperCase();
+      if (rut.length <= 1) return rut;
+
+      const cuerpo = rut.slice(0, -1);
+      const dv = rut.slice(-1);
+      return cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + '-' + dv;
+    }
+
+    input.addEventListener("keypress", function (e) {
+      const char = String.fromCharCode(e.which);
+      if (!/[0-9kK]/.test(char)) {
+        e.preventDefault();
+      }
+    });
+
+    input.addEventListener("input", function () {
+      let valor = limpiarFormato(this.value);
+
+      if (valor.length > 1) {
+        this.value = formatearRut(valor);
+      } else {
+        this.value = valor;
+      }
+
+      const filter = limpiarFormato(valor);
+      const rows = document.querySelectorAll("#dataTable tbody tr");
+
+      rows.forEach(row => {
+        const rutCell = row.querySelector("td:nth-child(2)");
+        if (!rutCell) return;
+
+        const rutTexto = limpiarFormato(rutCell.textContent);
+        row.classList.toggle("hide", filter && !rutTexto.includes(filter));
+      });
+    });
   </script>
 </body>
 </html>
