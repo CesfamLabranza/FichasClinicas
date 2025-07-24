@@ -19,11 +19,6 @@
       gap: 20px;
     }
 
-    .search-box {
-      display: flex;
-      flex-direction: column;
-    }
-
     .search-box input {
       padding: 8px;
       width: 300px;
@@ -37,11 +32,6 @@
       border-radius: 8px;
       background: #f9f9f9;
       min-width: 420px;
-    }
-
-    .stats-box h3 {
-      margin: 0 0 10px 0;
-      font-size: 16px;
     }
 
     .stats-inline {
@@ -63,19 +53,16 @@
     .stats-inline .total {
       color: #155724;
       background-color: #d4edda;
-      border: 1px solid #c3e6cb;
     }
 
     .stats-inline .eliminar {
       color: #721c24;
       background-color: #f8d7da;
-      border: 1px solid #f5c6cb;
     }
 
     .stats-inline .anios {
       color: #004085;
       background-color: #cce5ff;
-      border: 1px solid #b8daff;
     }
 
     .table-container {
@@ -97,23 +84,11 @@
       text-align: left;
     }
 
-    tr.hide {
-      display: none;
-    }
-
-    tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
-
     th {
       background-color: #333;
       color: white;
       position: sticky;
       top: 0;
-    }
-
-    h3 {
-      margin-top: 40px;
     }
 
     .btn-container {
@@ -122,7 +97,6 @@
     }
 
     .link-btn {
-      display: inline-block;
       background-color: #007bff;
       color: white;
       padding: 12px 20px;
@@ -130,15 +104,15 @@
       text-decoration: none;
       font-size: 16px;
       font-weight: bold;
-      cursor: pointer;
       border: none;
+      cursor: pointer;
     }
 
     .link-btn:hover {
       background-color: #0056b3;
     }
 
-    /* Modal Styles */
+    /* Modal */
     .modal {
       display: none;
       position: fixed;
@@ -158,11 +132,6 @@
       border-radius: 8px;
       width: 300px;
       text-align: center;
-      box-shadow: 0px 4px 8px rgba(0,0,0,0.3);
-    }
-
-    .modal-content h4 {
-      margin-bottom: 15px;
     }
 
     .modal-content input {
@@ -173,23 +142,24 @@
       border-radius: 4px;
     }
 
-    .modal-content button {
+    .btn-confirm {
+      background: #28a745;
+      color: white;
       padding: 8px 14px;
       margin: 5px;
       border: none;
       border-radius: 4px;
-      font-size: 14px;
       cursor: pointer;
-    }
-
-    .btn-confirm {
-      background: #28a745;
-      color: white;
     }
 
     .btn-cancel {
       background: #dc3545;
       color: white;
+      padding: 8px 14px;
+      margin: 5px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
     }
 
     .error {
@@ -264,7 +234,6 @@
       }
     }
 
-    // === Código de datos (igual al anterior) ===
     const sheetID = "1r4oZdMkehQZmUX87nK8-bxMwxk-3a70XUfYV-V0QaBM";
     const sheetName = "Hoja 1";
     const query = encodeURIComponent("SELECT A, B, C, D, E, F, G, H, I");
@@ -288,7 +257,10 @@
         const tbody = document.createElement("tbody");
         const eliminarBody = document.createElement("tbody");
 
-        const headers = data.table.cols.map(col => `<th>${col.label || ""}</th>`).join('');
+        // Encabezados sin columna Ficha (index 2)
+        const headers = data.table.cols
+          .map((col, index) => index === 2 ? '' : `<th>${col.label || ""}</th>`)
+          .join('');
         table.innerHTML = `<thead><tr>${headers}</tr></thead>`;
         eliminarTable.innerHTML = `<thead><tr>${headers}</tr></thead>`;
 
@@ -300,7 +272,8 @@
         const conteoPorAno = {};
 
         data.table.rows.forEach(row => {
-          const cells = row.c.map(cell => {
+          const cells = row.c.map((cell, index) => {
+            if (index === 2) return ''; // Ocultamos columna Ficha
             const value = (cell && (cell.f || cell.v)) || '';
             return `<td>${value}</td>`;
           });
