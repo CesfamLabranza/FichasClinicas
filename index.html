@@ -1,385 +1,331 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <meta charset="utf-8">
-  <title>Buscador de Planilla</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      margin: 0;
-    }
+<meta charset="utf-8">
+<title>Buscador con Gráfico y Botones</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
 
-    .header-inline {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      gap: 20px;
-    }
+  /* Layout principal */
+  .header-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-bottom: 15px;
+  }
 
-    .search-box {
-      display: flex;
-      flex-direction: column;
-    }
+  /* Buscador */
+  .title-search {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  .title-search input {
+    padding: 8px;
+    width: 300px;
+    font-size: 16px;
+    border: 2px solid #333;
+  }
 
-    .search-box input {
-      padding: 8px;
-      width: 300px;
-      border: 2px solid #333;
-      font-size: 16px;
-    }
+  /* Sección Cantidades + Gráfico */
+  .stats-chart {
+    display: grid;
+    grid-template-columns: 55% 45%;
+    gap: 15px;
+    align-items: start;
+  }
 
-    .stats-box {
-      border: 2px solid #ccc;
-      padding: 10px 15px;
-      border-radius: 8px;
-      background: #f9f9f9;
-      min-width: 420px;
-    }
+  .stats-box {
+    background: #f9f9f9;
+    padding: 12px;
+    border-radius: 8px;
+    border: 2px solid #ccc;
+  }
+  .stats-inline {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .stats-inline span {
+    background: #fff;
+    padding: 6px 10px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    font-weight: 500;
+  }
 
-    .stats-box h3 {
-      margin: 0 0 10px 0;
-      font-size: 16px;
-    }
+  /* Gráfico */
+  .chart-box {
+    background: #fff;
+    padding: 8px;
+  }
+  .chart-box canvas {
+    width: 100% !important;
+    height: 180px !important;
+  }
 
-    .stats-inline {
-      display: flex;
-      gap: 15px;
-      font-size: 14px;
-      flex-wrap: wrap;
-      white-space: nowrap;
-    }
+  /* Tabla */
+  .table-container {
+    height: 300px;
+    overflow: auto;
+    border: 1px solid #ccc;
+    margin-top: 20px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th, td {
+    border: 1px solid #ddd;
+    padding: 6px;
+    text-align: left;
+  }
+  th {
+    background-color: #333;
+    color: white;
+    position: sticky;
+    top: 0;
+  }
 
-    .stats-inline span {
-      background: #fff;
-      padding: 6px 10px;
-      border-radius: 5px;
-      border: 1px solid #ddd;
-      font-weight: 500;
-    }
+  /* Botones en la parte inferior */
+  .bottom-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 15px;
+  }
+  .btn {
+    background: #4285F4;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    transition: 0.3s;
+  }
+  .btn:hover {
+    background: #3367d6;
+    transform: scale(1.05);
+  }
 
-    .stats-inline .total {
-      color: #155724;
-      background-color: #d4edda;
-      border: 1px solid #c3e6cb;
-    }
-
-    .stats-inline .eliminar {
-      color: #721c24;
-      background-color: #f8d7da;
-      border: 1px solid #f5c6cb;
-    }
-
-    .stats-inline .anios {
-      color: #004085;
-      background-color: #cce5ff;
-      border: 1px solid #b8daff;
-    }
-
-    .table-container {
-      height: 300px;
-      overflow: auto;
-      border: 1px solid #ccc;
-      margin-bottom: 30px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-    }
-
-    th, td {
-      border: 1px solid #ddd;
-      padding: 4px 6px;
-      text-align: left;
-    }
-
-    tr.hide {
-      display: none;
-    }
-
-    tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
-
-    th {
-      background-color: #333;
-      color: white;
-      position: sticky;
-      top: 0;
-    }
-
-    h3 {
-      margin-top: 40px;
-    }
-
-    .btn-container {
-      text-align: right;
-      margin: 20px 20px 0 0;
-    }
-
-    .link-btn {
-      display: inline-block;
-      background-color: #007bff;
-      color: white;
-      padding: 12px 20px;
-      border-radius: 8px;
-      text-decoration: none;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      border: none;
-    }
-
-    .link-btn:hover {
-      background-color: #0056b3;
-    }
-
-    /* Modal Styles */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.6);
-      justify-content: center;
-      align-items: center;
-    }
-
-    .modal-content {
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      width: 300px;
-      text-align: center;
-      box-shadow: 0px 4px 8px rgba(0,0,0,0.3);
-    }
-
-    .modal-content h4 {
-      margin-bottom: 15px;
-    }
-
-    .modal-content input {
-      width: 90%;
-      padding: 8px;
-      margin-bottom: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-
-    .modal-content button {
-      padding: 8px 14px;
-      margin: 5px;
-      border: none;
-      border-radius: 4px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-
-    .btn-confirm {
-      background: #28a745;
-      color: white;
-    }
-
-    .btn-cancel {
-      background: #dc3545;
-      color: white;
-    }
-
-    .error {
-      color: red;
-      font-size: 13px;
-      display: none;
-    }
-  </style>
+  /* Modal */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+  }
+  .modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    width: 350px;
+  }
+  .modal input {
+    width: 80%;
+    padding: 8px;
+    margin-top: 10px;
+    border: 1px solid #ccc;
+  }
+  .close-btn {
+    margin-top: 15px;
+    background: red;
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    cursor: pointer;
+  }
+</style>
 </head>
 <body>
-  <div class="header-inline">
-    <div class="search-box">
-      <h2>Buscar por RUT</h2>
-      <input type="text" id="searchInput" placeholder="Ej: 12.345.678-K">
-    </div>
+
+<!-- Encabezado -->
+<div class="header-grid">
+  <div class="title-search">
+    <h2>Buscar por RUT</h2>
+    <input type="text" id="searchInput" placeholder="Ej: 12.345.678-K" oninput="formatRUT(this)">
+  </div>
+
+  <!-- Cantidades + Gráfico -->
+  <div class="stats-chart">
     <div class="stats-box">
       <h3>📌 Cantidades</h3>
       <div class="stats-inline">
-        <span class="total">📊 <b>Total:</b> <span id="totalRegistros">0</span></span>
-        <span class="eliminar">❌ <b>A eliminar:</b> <span id="totalEliminar">0</span></span>
-        <span class="anios">📅 <b>Años:</b> <span id="conteoPorAno"></span></span>
+        <span>📊 Total: <span id="totalRegistros">0</span></span>
+        <span>❌ A eliminar: <span id="totalEliminar">0</span></span>
       </div>
+      <div>📅 Años: <span id="conteoPorAno"></span></div>
+    </div>
+
+    <div class="chart-box">
+      <canvas id="graficoAnios"></canvas>
     </div>
   </div>
+</div>
 
-  <div class="table-container">
-    <table id="dataTable"></table>
+<!-- Tabla principal -->
+<div class="table-container">
+  <table id="dataTable"></table>
+</div>
+
+<!-- Tabla eliminar -->
+<h3>Registros con más de 15 años sin atención:</h3>
+<div class="table-container">
+  <table id="eliminarTable"></table>
+</div>
+
+<!-- Botones en la parte inferior -->
+<div class="bottom-buttons">
+  <button class="btn" onclick="openModal('planillaModal')">📂 Ver Planilla</button>
+  <button class="btn" onclick="openModal('archivosModal')">📁 Archivos</button>
+</div>
+
+<!-- Modal Ver Planilla -->
+<div id="planillaModal" class="modal">
+  <div class="modal-content">
+    <h3>Ingrese clave para acceder</h3>
+    <input type="password" id="claveAcceso" placeholder="Clave">
+    <br>
+    <button class="btn" onclick="verificarClave()">Acceder</button>
+    <button class="close-btn" onclick="closeModal('planillaModal')">Cerrar</button>
   </div>
+</div>
 
-  <h3>Registros con más de 15 años sin atención (para eliminar):</h3>
-  <div class="table-container">
-    <table id="eliminarTable"></table>
+<!-- Modal Archivos -->
+<div id="archivosModal" class="modal">
+  <div class="modal-content">
+    <h3>Archivos Disponibles</h3>
+    <ul id="listaArchivos"></ul>
+    <button class="close-btn" onclick="closeModal('archivosModal')">Cerrar</button>
   </div>
+</div>
 
-  <div class="btn-container">
-    <button class="link-btn" onclick="mostrarModal()">📂 Ver Planilla Completa</button>
-  </div>
+<script>
+const sheetID = "1r4oZdMkehQZmUX87nK8-bxMwxk-3a70XUfYV-V0QaBM";
+const sheetName = "Hoja 1";
+const query = encodeURIComponent("SELECT A,B,C,D,E,F,G,H");
+const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=${sheetName}&tq=${query}`;
 
-  <!-- Modal -->
-  <div class="modal" id="modalClave">
-    <div class="modal-content">
-      <h4>Ingrese clave de acceso</h4>
-      <input type="password" id="claveInput" placeholder="Clave">
-      <p class="error" id="errorMsg">Clave incorrecta</p>
-      <div>
-        <button class="btn-confirm" onclick="validarClave()">Aceptar</button>
-        <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
-      </div>
-    </div>
-  </div>
+// Formatear RUT automáticamente
+function formatRUT(input) {
+  let value = input.value.replace(/[^0-9kK]/g, '').toUpperCase();
+  if (value.length > 1) {
+    value = value.slice(0, -1).replace(/\B(?=(\d{3})+(?!\d))/g, ".") + '-' + value.slice(-1);
+  }
+  input.value = value;
+  filtrarTabla(value);
+}
 
-  <script>
-    const sheetURL = "https://docs.google.com/spreadsheets/d/1r4oZdMkehQZmUX87nK8-bxMwxk-3a70XUfYV-V0QaBM/edit?usp=sharing";
+// Función modal
+function openModal(id) { document.getElementById(id).style.display = "flex"; }
+function closeModal(id) { document.getElementById(id).style.display = "none"; }
 
-    function mostrarModal() {
-      document.getElementById("modalClave").style.display = "flex";
-    }
+// Clave para abrir la planilla
+function verificarClave() {
+  const clave = document.getElementById("claveAcceso").value;
+  if (clave === "infolabranza") {
+    window.open("https://docs.google.com/spreadsheets/d/1r4oZdMkehQZmUX87nK8-bxMwxk-3a70XUfYV-V0QaBM/edit?usp=sharing", "_blank");
+    closeModal('planillaModal');
+  } else {
+    alert("Clave incorrecta");
+  }
+}
 
-    function cerrarModal() {
-      document.getElementById("modalClave").style.display = "none";
-      document.getElementById("errorMsg").style.display = "none";
-      document.getElementById("claveInput").value = "";
-    }
+// Fetch datos
+fetch(url)
+  .then(res => res.text())
+  .then(rep => {
+    const data = JSON.parse(rep.substr(47).slice(0, -2));
+    const table = document.getElementById("dataTable");
+    const eliminarTable = document.getElementById("eliminarTable");
+    const tbody = document.createElement("tbody");
+    const eliminarBody = document.createElement("tbody");
 
-    function validarClave() {
-      const clave = document.getElementById("claveInput").value;
-      if (clave === "infolabranza") {
-        window.open(sheetURL, "_blank");
-        cerrarModal();
-      } else {
-        document.getElementById("errorMsg").style.display = "block";
+    const headers = data.table.cols.map(col => `<th>${col.label || ""}</th>`).join('');
+    table.innerHTML = `<thead><tr>${headers}</tr></thead>`;
+    eliminarTable.innerHTML = `<thead><tr>${headers}</tr></thead>`;
+
+    const hoy = new Date();
+    const hace15 = new Date(hoy.getFullYear() - 15, hoy.getMonth(), hoy.getDate());
+    let total = 0, totalEliminar = 0;
+    const conteoPorAno = {};
+
+    data.table.rows.forEach(row => {
+      const cells = row.c.map(cell => `<td>${(cell && (cell.f || cell.v)) || ''}</td>`);
+      const tr = document.createElement("tr");
+      tr.innerHTML = cells.join('');
+      tbody.appendChild(tr);
+      total++;
+
+      const fechaUltima = (row.c[3] && (row.c[3].f || row.c[3].v)) || '';
+      const fechaParsed = parseFecha(fechaUltima);
+      if (fechaParsed) {
+        const year = fechaParsed.getFullYear();
+        conteoPorAno[year] = (conteoPorAno[year] || 0) + 1;
       }
-    }
-
-    // === Cargar datos ===
-    const sheetID = "1r4oZdMkehQZmUX87nK8-bxMwxk-3a70XUfYV-V0QaBM";
-    const sheetName = "Hoja 1";
-    const query = encodeURIComponent("SELECT A, B, C, D, E, F, G, H"); // Ahora 8 columnas
-    const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=${sheetName}&tq=${query}`;
-
-    function parseFecha(fechaStr) {
-      const partes = fechaStr.split("-");
-      if (partes.length !== 3) return null;
-      let [dd, mm, aa] = partes;
-      let year = parseInt(aa);
-      if (year < 100) year += (year < 25) ? 2000 : 1900;
-      return new Date(year, parseInt(mm) - 1, parseInt(dd));
-    }
-
-    fetch(url)
-      .then(res => res.text())
-      .then(rep => {
-        const data = JSON.parse(rep.substr(47).slice(0, -2));
-        const table = document.getElementById("dataTable");
-        const eliminarTable = document.getElementById("eliminarTable");
-        const tbody = document.createElement("tbody");
-        const eliminarBody = document.createElement("tbody");
-
-        const headers = data.table.cols.map(col => `<th>${col.label || ""}</th>`).join('');
-        table.innerHTML = `<thead><tr>${headers}</tr></thead>`;
-        eliminarTable.innerHTML = `<thead><tr>${headers}</tr></thead>`;
-
-        const hoy = new Date();
-        const hace15 = new Date(hoy.getFullYear() - 15, hoy.getMonth(), hoy.getDate());
-
-        let total = 0;
-        let totalEliminar = 0;
-        const conteoPorAno = {};
-
-        data.table.rows.forEach(row => {
-          const cells = row.c.map(cell => {
-            const value = (cell && (cell.f || cell.v)) || '';
-            return `<td>${value}</td>`;
-          });
-
-          const tr = document.createElement("tr");
-          tr.innerHTML = cells.join('');
-          tbody.appendChild(tr);
-          total++;
-
-          const fechaUltima = (row.c[3] && (row.c[3].f || row.c[3].v)) || '';
-          const fechaParsed = parseFecha(fechaUltima);
-
-          if (fechaParsed) {
-            const year = fechaParsed.getFullYear();
-            conteoPorAno[year] = (conteoPorAno[year] || 0) + 1;
-          }
-
-          if (fechaParsed && fechaParsed <= hace15) {
-            const tr2 = document.createElement("tr");
-            tr2.innerHTML = cells.join('');
-            eliminarBody.appendChild(tr2);
-            totalEliminar++;
-          }
-        });
-
-        table.appendChild(tbody);
-        eliminarTable.appendChild(eliminarBody);
-
-        document.getElementById("totalRegistros").textContent = total;
-        document.getElementById("totalEliminar").textContent = totalEliminar;
-
-        const anosOrdenados = Object.keys(conteoPorAno).sort((a, b) => b - a);
-        document.getElementById("conteoPorAno").textContent =
-          anosOrdenados.map(year => `${year}(${conteoPorAno[year]})`).join(', ');
-      });
-
-    // === Buscador SOLO por RUT con formato automático ===
-    const input = document.getElementById("searchInput");
-
-    function limpiarFormato(texto) {
-      return texto.replace(/\./g, '').replace(/-/g, '').toLowerCase();
-    }
-
-    function formatearRut(rut) {
-      rut = rut.replace(/\./g, '').replace(/-/g, '').toUpperCase();
-      if (rut.length <= 1) return rut;
-
-      const cuerpo = rut.slice(0, -1);
-      const dv = rut.slice(-1);
-      return cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + '-' + dv;
-    }
-
-    input.addEventListener("keypress", function (e) {
-      const char = String.fromCharCode(e.which);
-      if (!/[0-9kK]/.test(char)) {
-        e.preventDefault();
+      if (fechaParsed && fechaParsed <= hace15) {
+        const tr2 = document.createElement("tr");
+        tr2.innerHTML = cells.join('');
+        eliminarBody.appendChild(tr2);
+        totalEliminar++;
       }
     });
 
-    input.addEventListener("input", function () {
-      let valor = limpiarFormato(this.value);
+    table.appendChild(tbody);
+    eliminarTable.appendChild(eliminarBody);
+    document.getElementById("totalRegistros").textContent = total;
+    document.getElementById("totalEliminar").textContent = totalEliminar;
+    const anosOrdenados = Object.keys(conteoPorAno).sort((a, b) => b - a);
+    document.getElementById("conteoPorAno").textContent = anosOrdenados.map(y => `${y}(${conteoPorAno[y]})`).join(', ');
 
-      if (valor.length > 1) {
-        this.value = formatearRut(valor);
-      } else {
-        this.value = valor;
+    // Gráfico
+    const ctx = document.getElementById("graficoAnios").getContext("2d");
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: anosOrdenados,
+        datasets: [{
+          label: 'Registros por Año',
+          data: anosOrdenados.map(y => conteoPorAno[y]),
+          backgroundColor: 'rgba(54, 162, 235, 0.7)'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false
       }
-
-      const filter = limpiarFormato(valor);
-      const rows = document.querySelectorAll("#dataTable tbody tr");
-
-      rows.forEach(row => {
-        const rutCell = row.querySelector("td:nth-child(2)"); // Columna RUT
-        if (!rutCell) return;
-
-        const rutTexto = limpiarFormato(rutCell.textContent);
-        row.classList.toggle("hide", filter && !rutTexto.includes(filter));
-      });
     });
-  </script>
+});
+
+// Parse fecha
+function parseFecha(fechaStr) {
+  const partes = fechaStr.split("-");
+  if (partes.length !== 3) return null;
+  let [dd, mm, aa] = partes;
+  let year = parseInt(aa);
+  if (year < 100) year += (year < 25) ? 2000 : 1900;
+  return new Date(year, parseInt(mm) - 1, parseInt(dd));
+}
+
+// Filtrar por RUT
+function filtrarTabla(rut) {
+  const filas = document.querySelectorAll("#dataTable tbody tr");
+  filas.forEach(fila => {
+    fila.style.display = fila.cells[1].textContent.includes(rut) ? "" : "none";
+  });
+}
+</script>
 </body>
 </html>
