@@ -113,7 +113,7 @@
     transform: scale(1.05);
   }
 
-  /* Modal */
+  /* Modal (General) */
   .modal {
     display: none;
     position: fixed;
@@ -132,6 +132,7 @@
     border-radius: 8px;
     text-align: center;
     width: 350px;
+    animation: fadeIn 0.3s ease-in-out;
   }
   .modal input {
     width: 80%;
@@ -146,6 +147,42 @@
     padding: 8px 15px;
     border: none;
     cursor: pointer;
+  }
+
+  /* Animación Modal */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  /* MODAL Archivos Ajustado */
+  #archivosModal .modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: left;
+    max-width: 600px;
+    width: auto;
+    max-height: 400px;
+    overflow-y: auto;
+    white-space: nowrap;
+  }
+  #listaArchivos {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+  }
+  #listaArchivos li {
+    padding: 8px 0;
+    border-bottom: 1px solid #ddd;
+  }
+  #listaArchivos li a {
+    text-decoration: none;
+    color: #007bff;
+    font-weight: bold;
+  }
+  #listaArchivos li a:hover {
+    text-decoration: underline;
   }
 </style>
 </head>
@@ -188,8 +225,8 @@
 
 <!-- Botones en la parte inferior -->
 <div class="bottom-buttons">
-  <button class="btn" onclick="openModal('planillaModal')">📂 Ver Planilla</button>
   <button class="btn" onclick="openModal('archivosModal')">📁 Archivos</button>
+  <button class="btn" onclick="openModal('planillaModal')">✏️ Editar</button>
 </div>
 
 <!-- Modal Ver Planilla -->
@@ -207,7 +244,7 @@
 <div id="archivosModal" class="modal">
   <div class="modal-content">
     <h3>Archivos Disponibles</h3>
-    <ul id="listaArchivos"></ul>
+    <ul id="listaArchivos">Cargando...</ul>
     <button class="close-btn" onclick="closeModal('archivosModal')">Cerrar</button>
   </div>
 </div>
@@ -217,6 +254,10 @@ const sheetID = "1r4oZdMkehQZmUX87nK8-bxMwxk-3a70XUfYV-V0QaBM";
 const sheetName = "Hoja 1";
 const query = encodeURIComponent("SELECT A,B,C,D,E,F,G,H");
 const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=${sheetName}&tq=${query}`;
+
+// API KEY y Carpeta para Archivos
+const API_KEY = "AIzaSyDmAlHTd3SeDq8dF_gglAS5TJUc5tgGePk";
+const FOLDER_ID = "1Z3fZmlekSnD0jxYLzIEymUnbFRRBBRBq";
 
 // Formatear RUT automáticamente
 function formatRUT(input) {
@@ -229,21 +270,24 @@ function formatRUT(input) {
 }
 
 // Función modal
-function openModal(id) { document.getElementById(id).style.display = "flex"; }
+function openModal(id) { 
+  document.getElementById(id).style.display = "flex"; 
+  if(id === "archivosModal") { listarArchivos(); }
+}
 function closeModal(id) { document.getElementById(id).style.display = "none"; }
 
 // Clave para abrir la planilla
 function verificarClave() {
   const clave = document.getElementById("claveAcceso").value;
   if (clave === "infolabranza") {
-    window.open("https://docs.google.com/spreadsheets/d/1r4oZdMkehQZmUX87nK8-bxMwxk-3a70XUfYV-V0QaBM/edit?usp=sharing", "_blank");
+    window.open("https://drive.google.com/drive/folders/1XKg9Odl_A9QtUHOdsKocgR8qHwTgpCVt?usp=sharing", "_blank");
     closeModal('planillaModal');
   } else {
     alert("Clave incorrecta");
   }
 }
 
-// Fetch datos
+// Fetch datos planilla
 fetch(url)
   .then(res => res.text())
   .then(rep => {
@@ -302,10 +346,7 @@ fetch(url)
           backgroundColor: 'rgba(54, 162, 235, 0.7)'
         }]
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false
-      }
+      options: { responsive: true, maintainAspectRatio: false }
     });
 });
 
@@ -325,6 +366,32 @@ function filtrarTabla(rut) {
   filas.forEach(fila => {
     fila.style.display = fila.cells[1].textContent.includes(rut) ? "" : "none";
   });
+}
+
+// Listar archivos en modal
+async function listarArchivos() {
+  const lista = document.getElementById("listaArchivos");
+  lista.innerHTML = "Cargando...";
+  try {
+    const response = await fetch(`https://www.googleapis.com/drive/v3/files?q='${FOLDER_ID}'+in+parents&key=${API_KEY}`);
+    const data = await response.json();
+    lista.innerHTML = "";
+    if (data.files && data.files.length > 0) {
+      data.files.forEach(file => {
+        const li = document.createElement("li");
+        const link = document.createElement("a");
+        link.href = `https://drive.google.com/uc?export=download&id=${file.id}`;
+        link.target = "_blank";
+        link.textContent = file.name;
+        li.appendChild(link);
+        lista.appendChild(li);
+      });
+    } else {
+      lista.innerHTML = "<li>No hay archivos disponibles.</li>";
+    }
+  } catch (error) {
+    lista.innerHTML = "<li>Error al cargar archivos.</li>";
+  }
 }
 </script>
 </body>
