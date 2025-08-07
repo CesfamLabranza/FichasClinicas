@@ -419,14 +419,14 @@ function filtrarTabla(rut) {
 
 <div id="relojControl" class="tab-content">
   <h2>RELOJ CONTROL</h2>
-  <p>Sube un archivo Excel con los registros para procesar:</p>
 
-  <form id="formularioExcel" enctype="multipart/form-data" method="post" action="http://localhost:5000/procesar">
-    <input type="file" name="archivo_excel" accept=".xlsx" required>
-    <button class="btn" type="submit">📤 Procesar Archivo</button>
+  <form action="/procesar" method="POST" enctype="multipart/form-data" style="margin-top: 20px;">
+    <label for="archivo">Selecciona un archivo Excel:</label><br><br>
+    <input type="file" name="archivo" id="archivo" accept=".xlsx" required>
+    <br><br>
+    <button type="submit" class="btn">Procesar archivo</button>
   </form>
 </div>
-
 
   <script>
     function showTab(tabId) {
