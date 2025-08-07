@@ -420,13 +420,15 @@ function filtrarTabla(rut) {
 <div id="relojControl" class="tab-content">
   <h2>RELOJ CONTROL</h2>
 
-  <form action="/procesar" method="POST" enctype="multipart/form-data" style="margin-top: 20px;">
+  <form id="formRelojControl" enctype="multipart/form-data" style="margin-top: 20px;">
     <label for="archivo">Selecciona un archivo Excel:</label><br><br>
     <input type="file" name="archivo" id="archivo" accept=".xlsx" required>
     <br><br>
     <button type="submit" class="btn">Procesar archivo</button>
+    <p id="estadoProceso" style="margin-top: 10px; font-weight: bold;"></p>
   </form>
 </div>
+
 
   <script>
     function showTab(tabId) {
@@ -440,5 +442,52 @@ function filtrarTabla(rut) {
       document.getElementById(tabId).classList.add('active');
     }
   </script>
+
+<script>
+document.getElementById("formRelojControl").addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  const archivo = document.getElementById("archivo").files[0];
+  const estado = document.getElementById("estadoProceso");
+
+  if (!archivo) {
+    estado.textContent = "Por favor selecciona un archivo.";
+    estado.style.color = "red";
+    return;
+  }
+
+  estado.textContent = "Procesando archivo...";
+  estado.style.color = "black";
+
+  const formData = new FormData();
+  formData.append("archivo", archivo);
+
+  fetch("https://relojcontrolbackend.onrender.com/procesar", {
+    method: "POST",
+    body: formData
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Error al procesar el archivo.");
+    return response.blob();
+  })
+  .then(blob => {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "archivo_procesado.xlsx";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+    estado.textContent = "✅ Archivo procesado correctamente. Descarga iniciada.";
+    estado.style.color = "green";
+  })
+  .catch(error => {
+    console.error(error);
+    estado.textContent = "❌ Ocurrió un error al procesar el archivo.";
+    estado.style.color = "red";
+  });
+});
+</script>
 </body>
 </html>
