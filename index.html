@@ -1,6 +1,47 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <meta charset="utf-8">
+  <title>Sistema de Fichas y Control</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    .tabs {
+      display: flex;
+      background-color: #333;
+    }
+    .tab {
+      flex: 1;
+      padding: 15px;
+      color: white;
+      text-align: center;
+      cursor: pointer;
+      background-color: #333;
+      border-bottom: 3px solid transparent;
+    }
+    .tab:hover, .tab.active {
+      background-color: #444;
+      border-bottom: 3px solid #4285F4;
+    }
+    .tab-content {
+      display: none;
+      padding: 20px;
+    }
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('fichasClinicas')">FICHAS CLÍNICAS</div>
+    <div class="tab" onclick="showTab('relojControl')">RELOJ CONTROL</div>
+  </div>
+
+  <div id="fichasClinicas" class="tab-content active">
+<!DOCTYPE html>
+<html lang="es">
+<head>
 <meta charset="utf-8">
 <title>Buscador con Gráfico y Botones</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -370,5 +411,28 @@ function filtrarTabla(rut) {
   });
 }
 </script>
+</body>
+</html>
+
+
+  </div>
+
+  <div id="relojControl" class="tab-content">
+    <h2>RELOJ CONTROL</h2>
+    <p>Contenido en desarrollo...</p>
+  </div>
+
+  <script>
+    function showTab(tabId) {
+      const tabs = document.querySelectorAll('.tab');
+      const contents = document.querySelectorAll('.tab-content');
+
+      tabs.forEach(tab => tab.classList.remove('active'));
+      contents.forEach(content => content.classList.remove('active'));
+
+      document.querySelector(`.tab[onclick*="${tabId}"]`).classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+  </script>
 </body>
 </html>
