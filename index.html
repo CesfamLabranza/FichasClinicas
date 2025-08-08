@@ -422,13 +422,15 @@ function filtrarTabla(rut) {
 
   <form id="formRelojControl" enctype="multipart/form-data" style="margin-top: 20px;">
     <label for="archivo">Selecciona un archivo Excel:</label><br><br>
-    <input type="file" name="archivo" id="archivo" accept=".xlsx" required>
+    <input type="file" name="archivo" id="archivo" accept=".xlsx,.xls" required>
     <br><br>
     <button type="submit" class="btn">Procesar archivo</button>
     <p id="estadoProceso" style="margin-top: 10px; font-weight: bold;"></p>
+
+    <!-- Cuadro de log de pasos -->
+    <pre id="logProceso" style="background:#f4f4f4; padding:10px; border:1px solid #ccc; max-height:200px; overflow:auto;"></pre>
   </form>
 </div>
-
 
   <script>
     function showTab(tabId) {
@@ -449,6 +451,7 @@ document.getElementById("formRelojControl").addEventListener("submit", function 
 
   const archivo = document.getElementById("archivo").files[0];
   const estado = document.getElementById("estadoProceso");
+  const log = document.getElementById("logProceso");
 
   if (!archivo) {
     estado.textContent = "Por favor selecciona un archivo.";
@@ -456,8 +459,9 @@ document.getElementById("formRelojControl").addEventListener("submit", function 
     return;
   }
 
-  estado.textContent = "Procesando archivo...";
+  estado.textContent = "⏳ Procesando archivo...";
   estado.style.color = "black";
+  log.textContent = "📤 Subiendo archivo...\n";
 
   const formData = new FormData();
   formData.append("archivo", archivo);
@@ -466,11 +470,16 @@ document.getElementById("formRelojControl").addEventListener("submit", function 
     method: "POST",
     body: formData
   })
-  .then(response => {
-    if (!response.ok) throw new Error("Error al procesar el archivo.");
+  .then(async response => {
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || "Error al procesar el archivo.");
+    }
     return response.blob();
   })
   .then(blob => {
+    log.textContent += "✅ Archivo procesado correctamente. Iniciando descarga...\n";
+
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -479,6 +488,7 @@ document.getElementById("formRelojControl").addEventListener("submit", function 
     a.click();
     a.remove();
     window.URL.revokeObjectURL(url);
+
     estado.textContent = "✅ Archivo procesado correctamente. Descarga iniciada.";
     estado.style.color = "green";
   })
@@ -486,8 +496,11 @@ document.getElementById("formRelojControl").addEventListener("submit", function 
     console.error(error);
     estado.textContent = "❌ Ocurrió un error al procesar el archivo.";
     estado.style.color = "red";
+    log.textContent += "❌ Error: " + error.message + "\n";
   });
 });
 </script>
+
 </body>
 </html>
+
