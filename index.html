@@ -413,94 +413,87 @@ function filtrarTabla(rut) {
 </script>
 </body>
 </html>
+</div>
 
-
-  </div>
-
+<!-- ===================== Pestaña RELOJ CONTROL ===================== -->
 <div id="relojControl" class="tab-content">
   <h2>RELOJ CONTROL</h2>
 
   <form id="formRelojControl" enctype="multipart/form-data" style="margin-top: 20px;">
-    <label for="archivo">Selecciona un archivo Excel:</label><br><br>
-    <input type="file" name="archivo" id="archivo" accept=".xlsx,.xls" required>
+    <label for="archivo">Selecciona un archivo Excel (.xls):</label><br><br>
+    <input type="file" name="archivo" id="archivo" accept=".xls" required>
     <br><br>
     <button type="submit" class="btn">Procesar archivo</button>
-    <p id="estadoProceso" style="margin-top: 10px; font-weight: bold;"></p>
 
-    <!-- Cuadro de log de pasos -->
+    <p id="estadoProceso" style="margin-top: 10px; font-weight: bold;"></p>
     <pre id="logProceso" style="background:#f4f4f4; padding:10px; border:1px solid #ccc; max-height:200px; overflow:auto;"></pre>
   </form>
 </div>
 
-  <script>
-    function showTab(tabId) {
-      const tabs = document.querySelectorAll('.tab');
-      const contents = document.querySelectorAll('.tab-content');
-
-      tabs.forEach(tab => tab.classList.remove('active'));
-      contents.forEach(content => content.classList.remove('active'));
-
-      document.querySelector(`.tab[onclick*="${tabId}"]`).classList.add('active');
-      document.getElementById(tabId).classList.add('active');
-    }
-  </script>
-
 <script>
-document.getElementById("formRelojControl").addEventListener("submit", function (e) {
-  e.preventDefault();
+  // --------- Envío del archivo .xls al backend ----------
+  document.getElementById("formRelojControl").addEventListener("submit", function (e) {
+    e.preventDefault();
 
-  const archivo = document.getElementById("archivo").files[0];
-  const estado = document.getElementById("estadoProceso");
-  const log = document.getElementById("logProceso");
+    const archivo = document.getElementById("archivo").files[0];
+    const estado = document.getElementById("estadoProceso");
+    const log = document.getElementById("logProceso");
 
-  if (!archivo) {
-    estado.textContent = "Por favor selecciona un archivo.";
-    estado.style.color = "red";
-    return;
-  }
-
-  estado.textContent = "⏳ Procesando archivo...";
-  estado.style.color = "black";
-  log.textContent = "📤 Subiendo archivo...\n";
-
-  const formData = new FormData();
-  formData.append("archivo", archivo);
-
-  fetch("https://relojcontrolbackend.onrender.com/procesar", {
-    method: "POST",
-    body: formData
-  })
-  .then(async response => {
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || "Error al procesar el archivo.");
+    if (!archivo) {
+      estado.textContent = "Por favor selecciona un archivo .xls.";
+      estado.style.color = "red";
+      return;
     }
-    return response.blob();
-  })
-  .then(blob => {
-    log.textContent += "✅ Archivo procesado correctamente. Iniciando descarga...\n";
 
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "archivo_procesado.xlsx";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
+    if (!archivo.name.toLowerCase().endsWith(".xls")) {
+      estado.textContent = "Sólo se aceptan archivos .xls";
+      estado.style.color = "red";
+      return;
+    }
 
-    estado.textContent = "✅ Archivo procesado correctamente. Descarga iniciada.";
-    estado.style.color = "green";
-  })
-  .catch(error => {
-    console.error(error);
-    estado.textContent = "❌ Ocurrió un error al procesar el archivo.";
-    estado.style.color = "red";
-    log.textContent += "❌ Error: " + error.message + "\n";
+    estado.textContent = "⏳ Procesando archivo...";
+    estado.style.color = "black";
+    log.textContent = "📤 Subiendo archivo...\n";
+
+    const formData = new FormData();
+    // ⚠️ el campo se llama 'archivo', igual que en app.py
+    formData.append("archivo", archivo);
+
+    fetch("https://relojcontrolbackend.onrender.com/procesar", {
+      method: "POST",
+      body: formData
+    })
+    .then(async response => {
+      if (!response.ok) {
+        const err = await response.text();
+        throw new Error(err || "Error al procesar el archivo.");
+      }
+      return response.blob();
+    })
+    .then(blob => {
+      log.textContent += "✅ Archivo procesado correctamente. Iniciando descarga...\n";
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "archivo_procesado.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      estado.textContent = "✅ Descarga iniciada.";
+      estado.style.color = "green";
+    })
+    .catch(error => {
+      estado.textContent = "❌ Ocurrió un error al procesar el archivo.";
+      estado.style.color = "red";
+      log.textContent += "❌ Error: " + error.message + "\n";
+      console.error(error);
+    });
   });
-});
 </script>
 
 </body>
 </html>
+
 
