@@ -30,7 +30,7 @@
     .btn { background: #4285F4; color: white; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: 0.3s; }
     .btn:hover { background: #3367d6; transform: scale(1.05); }
 
-    /* Modales */
+    /* Modales genéricos */
     .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
     .modal-content { background: #fff; padding: 20px; border-radius: 8px; text-align: center; width: 350px; }
     .modal input { width: 80%; padding: 8px; margin-top: 10px; border: 1px solid #ccc; }
@@ -38,11 +38,11 @@
 
     /* Lista Archivos */
     #listaArchivos { max-height: 150px; overflow-y: auto; padding: 10px; text-align: left; }
-    #listaArchivos li { list-style: none; padding: 6px; border-bottom: 1px solid #ccc; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #listaArchivos li { list-style: none; padding: 6px; border-bottom: 1px solid #ccc; cursor: pointer; }
     #listaArchivos li:hover { background-color: #f0f0f0; }
 
     /* RELOJ CONTROL */
-    #logProceso { background:#f4f4f4; padding:10px; border:1px solid #ccc; max-height:200px; overflow:auto; }
+    #logProceso { background:#f4f4f4; padding:10px; border:1px solid #ccc; max-height:200px; overflow:auto; white-space:pre-wrap; }
   </style>
 </head>
 <body>
@@ -51,7 +51,7 @@
     <div class="tab" onclick="showTab('relojControl')">RELOJ CONTROL</div>
   </div>
 
-  <!-- ============== FICHAS CLÍNICAS ============== -->
+  <!-- ================= FICHAS CLÍNICAS ================= -->
   <div id="fichasClinicas" class="tab-content active">
 
     <!-- Encabezado -->
@@ -153,10 +153,10 @@
 
   <!-- ======= Scripts globales ======= -->
   <script>
-    // URL del backend (fácil de cambiar si lo mueves)
-    const BACKEND_URL = "https://relojcontrolbackend.onrender.com";
+    /* ------------------ Config ------------------ */
+    const BACKEND = 'https://relojcontrolbackend.onrender.com';
 
-    // Tabs
+    /* -------------- Tabs (sin cambios) ---------- */
     function showTab(tabId) {
       const tabs = document.querySelectorAll('.tab');
       const contents = document.querySelectorAll('.tab-content');
@@ -166,7 +166,7 @@
       document.getElementById(tabId).classList.add('active');
     }
 
-    // Fichas Clínicas (igual que tenías)
+    /* --------- Fichas Clínicas (igual) ---------- */
     const sheetID = "1r4oZdMkehQZmUX87nK8-bxMwxk-3a70XUfYV-V0QaBM";
     const sheetName = "Hoja 1";
     const query = encodeURIComponent("SELECT A,B,C,D,E,F,G,H");
@@ -262,7 +262,31 @@
       });
     }
 
-    // ---------- Reloj Control – envío .xls ----------
+    /* ------- Helpers fetch con timeout/reintento ------- */
+    function fetchWithTimeout(resource, options = {}) {
+      const { timeout = 60000 } = options;
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeout);
+      return fetch(resource, { ...options, signal: controller.signal })
+        .finally(() => clearTimeout(id));
+    }
+
+    async function wakeBackend(log) {
+      // Intenta “despertar” Render (free plan) con 2 intentos
+      const tries = [0, 3000]; // inmediato y luego a los 3s
+      for (let i = 0; i < tries.length; i++) {
+        if (tries[i]) await new Promise(r => setTimeout(r, tries[i]));
+        try {
+          log.textContent += `🌐 Contactando servidor... (intento ${i+1})\n`;
+          const r = await fetchWithTimeout(`${BACKEND}/`, { mode: 'cors', timeout: 30000 });
+          if (r.ok) { log.textContent += "✅ Servidor listo.\n"; return; }
+        } catch (e) {
+          log.textContent += "⏳ Aún despertando...\n";
+        }
+      }
+    }
+
+    /* ----------- Reloj Control – envío .xls ----------- */
     document.getElementById("formRelojControl").addEventListener("submit", async function (e) {
       e.preventDefault();
 
@@ -281,23 +305,22 @@
         return;
       }
 
+      estado.textContent = "⏳ Procesando archivo...";
+      estado.style.color = "black";
+      log.textContent = "📤 Subiendo archivo...\n";
+
       try {
-        estado.textContent = "⏳ Despertando servicio...";
-        estado.style.color = "black";
-        // “Ping” para despertar el backend en Render
-        await fetch(`${BACKEND_URL}/`, { method: "GET", mode: "cors", credentials: "omit" });
+        // 1) Wake backend
+        await wakeBackend(log);
 
-        estado.textContent = "⏳ Procesando archivo...";
-        log.textContent = "📤 Subiendo archivo...\n";
-
+        // 2) Enviar archivo
         const formData = new FormData();
-        formData.append("archivo", archivo); // ← coincide con app.py
+        formData.append("archivo", archivo); // coincide con app.py
 
-        const resp = await fetch(`${BACKEND_URL}/procesar`, {
+        const resp = await fetchWithTimeout(`${BACKEND}/procesar`, {
           method: "POST",
-          mode: "cors",
-          credentials: "omit",
-          body: formData
+          body: formData,
+          timeout: 120000, // 120s por si demora
         });
 
         if (!resp.ok) {
@@ -307,23 +330,30 @@
 
         const blob = await resp.blob();
         log.textContent += "✅ Archivo procesado correctamente. Iniciando descarga...\n";
-
-        const urlBlob = window.URL.createObjectURL(blob);
+        const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
-        a.href = urlBlob;
+        a.href = url;
         a.download = "archivo_procesado.xlsx";
         document.body.appendChild(a);
         a.click();
         a.remove();
-        window.URL.revokeObjectURL(urlBlob);
-
+        window.URL.revokeObjectURL(url);
         estado.textContent = "✅ Descarga iniciada.";
         estado.style.color = "green";
       } catch (error) {
+        console.error(error);
         estado.textContent = "❌ Ocurrió un error al procesar el archivo.";
         estado.style.color = "red";
-        log.textContent += "❌ Error: " + (error?.message || error) + "\n";
-        console.error(error);
+
+        let msg = error?.message || "Error desconocido";
+        if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
+          msg = "No se pudo conectar con el servidor. Verifica la URL del backend y que esté activo.";
+        }
+        if (msg.includes("The operation was aborted")) {
+          msg = "El servidor tardó demasiado en responder (timeout). Intenta nuevamente.";
+        }
+
+        log.textContent += `❌ Error: ${msg}\n`;
       }
     });
   </script>
