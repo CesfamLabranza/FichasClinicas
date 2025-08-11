@@ -12,7 +12,7 @@
     .tab-content { display: none; padding: 20px; }
     .tab-content.active { display: block; }
 
-    /* ===== Estilos FICHAS CLÍNICAS ===== */
+    /* ===== FICHAS CLÍNICAS (igual que tenías) ===== */
     .header-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 15px; }
     .title-search { display: flex; align-items: center; gap: 15px; }
     .title-search input { padding: 8px; width: 300px; font-size: 16px; border: 2px solid #333; }
@@ -30,13 +30,11 @@
     .btn { background: #4285F4; color: white; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: 0.3s; }
     .btn:hover { background: #3367d6; transform: scale(1.05); }
 
-    /* Modales genéricos */
     .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
     .modal-content { background: #fff; padding: 20px; border-radius: 8px; text-align: center; width: 350px; }
     .modal input { width: 80%; padding: 8px; margin-top: 10px; border: 1px solid #ccc; }
     .close-btn { margin-top: 15px; background: red; color: white; padding: 8px 15px; border: none; cursor: pointer; }
 
-    /* Lista Archivos */
     #listaArchivos { max-height: 150px; overflow-y: auto; padding: 10px; text-align: left; }
     #listaArchivos li { list-style: none; padding: 6px; border-bottom: 1px solid #ccc; cursor: pointer; }
     #listaArchivos li:hover { background-color: #f0f0f0; }
@@ -51,17 +49,13 @@
     <div class="tab" onclick="showTab('relojControl')">RELOJ CONTROL</div>
   </div>
 
-  <!-- ================= FICHAS CLÍNICAS ================= -->
+  <!-- =================== FICHAS CLÍNICAS =================== -->
   <div id="fichasClinicas" class="tab-content active">
-
-    <!-- Encabezado -->
     <div class="header-grid">
       <div class="title-search">
         <h2>Buscar por RUT</h2>
         <input type="text" id="searchInput" placeholder="Ej: 12.345.678-K" oninput="formatRUT(this)">
       </div>
-
-      <!-- Cantidades + Gráfico -->
       <div class="stats-chart">
         <div class="stats-box">
           <h3>📌 Cantidades</h3>
@@ -77,25 +71,21 @@
       </div>
     </div>
 
-    <!-- Tabla principal -->
     <div class="table-container">
       <table id="dataTable"></table>
     </div>
 
-    <!-- Tabla eliminar -->
     <h3>Registros con más de 15 años sin atención:</h3>
     <div class="table-container">
       <table id="eliminarTable"></table>
     </div>
 
-    <!-- Botones -->
     <div class="bottom-buttons">
       <button class="btn" onclick="openModal('apkModal')">⬇ Descargar APK</button>
       <button class="btn" onclick="openModal('archivosModal')">📁 Archivos</button>
       <button class="btn" onclick="openModal('planillaModal')">✏ Editar</button>
     </div>
 
-    <!-- Modal Ver Planilla -->
     <div id="planillaModal" class="modal">
       <div class="modal-content">
         <h3>Ingrese clave para acceder</h3>
@@ -106,7 +96,6 @@
       </div>
     </div>
 
-    <!-- Modal Archivos -->
     <div id="archivosModal" class="modal">
       <div class="modal-content">
         <h3>Archivos Disponibles</h3>
@@ -118,7 +107,6 @@
       </div>
     </div>
 
-    <!-- Modal APK -->
     <div id="apkModal" class="modal">
       <div class="modal-content" style="width: 400px; text-align: left;">
         <h3 style="text-align: center;">Instrucciones para instalar la APK</h3>
@@ -133,30 +121,23 @@
         </div>
       </div>
     </div>
-
   </div>
 
-  <!-- ===================== RELOJ CONTROL ===================== -->
+  <!-- =================== RELOJ CONTROL =================== -->
   <div id="relojControl" class="tab-content">
     <h2>RELOJ CONTROL</h2>
-
     <form id="formRelojControl" enctype="multipart/form-data" style="margin-top: 20px;">
       <label for="archivo">Selecciona un archivo Excel (.xls):</label><br><br>
-      <input type="file" name="archivo" id="archivo" accept=".xls" required>
+      <input type="file" name="archivo" id="archivo" accept=".xls,.xlsx" required>
       <br><br>
       <button type="submit" class="btn">Procesar archivo</button>
-
       <p id="estadoProceso" style="margin-top: 10px; font-weight: bold;"></p>
       <pre id="logProceso"></pre>
     </form>
   </div>
 
-  <!-- ======= Scripts globales ======= -->
   <script>
-    /* ------------------ Config ------------------ */
-    const BACKEND = 'https://relojcontrolbackend.onrender.com';
-
-    /* -------------- Tabs (sin cambios) ---------- */
+    /* ---------- Navegación de pestañas ---------- */
     function showTab(tabId) {
       const tabs = document.querySelectorAll('.tab');
       const contents = document.querySelectorAll('.tab-content');
@@ -166,7 +147,7 @@
       document.getElementById(tabId).classList.add('active');
     }
 
-    /* --------- Fichas Clínicas (igual) ---------- */
+    /* ---------- Fichas Clínicas: igual que tenías ---------- */
     const sheetID = "1r4oZdMkehQZmUX87nK8-bxMwxk-3a70XUfYV-V0QaBM";
     const sheetName = "Hoja 1";
     const query = encodeURIComponent("SELECT A,B,C,D,E,F,G,H");
@@ -262,31 +243,38 @@
       });
     }
 
-    /* ------- Helpers fetch con timeout/reintento ------- */
-    function fetchWithTimeout(resource, options = {}) {
-      const { timeout = 60000 } = options;
+    /* ---------- Reloj Control: utilidades ---------- */
+    const BACKEND = 'https://relojcontrolbackend.onrender.com';
+
+    async function fetchWithTimeout(resource, options = {}) {
+      const { timeout = 120000, ...rest } = options;
       const controller = new AbortController();
       const id = setTimeout(() => controller.abort(), timeout);
-      return fetch(resource, { ...options, signal: controller.signal })
-        .finally(() => clearTimeout(id));
-    }
-
-    async function wakeBackend(log) {
-      // Intenta “despertar” Render (free plan) con 2 intentos
-      const tries = [0, 3000]; // inmediato y luego a los 3s
-      for (let i = 0; i < tries.length; i++) {
-        if (tries[i]) await new Promise(r => setTimeout(r, tries[i]));
-        try {
-          log.textContent += `🌐 Contactando servidor... (intento ${i+1})\n`;
-          const r = await fetchWithTimeout(`${BACKEND}/`, { mode: 'cors', timeout: 30000 });
-          if (r.ok) { log.textContent += "✅ Servidor listo.\n"; return; }
-        } catch (e) {
-          log.textContent += "⏳ Aún despertando...\n";
-        }
+      try {
+        const resp = await fetch(resource, { ...rest, signal: controller.signal });
+        return resp;
+      } finally {
+        clearTimeout(id);
       }
     }
 
-    /* ----------- Reloj Control – envío .xls ----------- */
+    async function wakeBackend(logEl) {
+      logEl.textContent += "🌐 Contactando servidor...\n";
+      try {
+        const r = await fetchWithTimeout(`${BACKEND}/`, { method: "GET", timeout: 15000, mode: 'cors' });
+        if (!r.ok) throw new Error("ping no OK");
+        logEl.textContent += "✅ Servidor listo.\n";
+      } catch (e) {
+        logEl.textContent += "⏳ Aún despertando...\n";
+        // espera y reintenta una vez
+        await new Promise(r => setTimeout(r, 1500));
+        const r2 = await fetchWithTimeout(`${BACKEND}/`, { method: "GET", timeout: 15000, mode: 'cors' });
+        if (!r2.ok) throw new Error("No respondió el backend.");
+        logEl.textContent += "✅ Servidor listo.\n";
+      }
+    }
+
+    /* ---------- Reloj Control: envío ---------- */
     document.getElementById("formRelojControl").addEventListener("submit", async function (e) {
       e.preventDefault();
 
@@ -299,62 +287,58 @@
         estado.style.color = "red";
         return;
       }
-      if (!archivo.name.toLowerCase().endsWith(".xls")) {
-        estado.textContent = "Sólo se aceptan archivos .xls";
-        estado.style.color = "red";
-        return;
-      }
 
       estado.textContent = "⏳ Procesando archivo...";
       estado.style.color = "black";
       log.textContent = "📤 Subiendo archivo...\n";
 
+      // Despierta la instancia (free tier)
+      await wakeBackend(log);
+      // Pequeña pausa: a veces gunicorn aún inicia workers
+      await new Promise(r => setTimeout(r, 500));
+
+      const formData = new FormData();
+      formData.append("archivo", archivo);
+
+      let resp;
       try {
-        // 1) Wake backend
-        await wakeBackend(log);
-
-        // 2) Enviar archivo
-        const formData = new FormData();
-        formData.append("archivo", archivo); // coincide con app.py
-
-        const resp = await fetchWithTimeout(`${BACKEND}/procesar`, {
+        resp = await fetchWithTimeout(`${BACKEND}/procesar`, {
           method: "POST",
           body: formData,
-          timeout: 120000, // 120s por si demora
+          timeout: 120000,
+          mode: 'cors'
         });
-
         if (!resp.ok) {
-          const errText = await resp.text();
-          throw new Error(errText || "Error al procesar el archivo.");
+          const err = await resp.text();
+          throw new Error(err || "Error al procesar el archivo (1).");
         }
-
-        const blob = await resp.blob();
-        log.textContent += "✅ Archivo procesado correctamente. Iniciando descarga...\n";
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "archivo_procesado.xlsx";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-        estado.textContent = "✅ Descarga iniciada.";
-        estado.style.color = "green";
-      } catch (error) {
-        console.error(error);
-        estado.textContent = "❌ Ocurrió un error al procesar el archivo.";
-        estado.style.color = "red";
-
-        let msg = error?.message || "Error desconocido";
-        if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
-          msg = "No se pudo conectar con el servidor. Verifica la URL del backend y que esté activo.";
+      } catch (e) {
+        log.textContent += "⏳ Reintentando envío...\n";
+        await new Promise(r => setTimeout(r, 800));
+        resp = await fetchWithTimeout(`${BACKEND}/procesar`, {
+          method: "POST",
+          body: formData,
+          timeout: 120000,
+          mode: 'cors'
+        });
+        if (!resp.ok) {
+          const err2 = await resp.text();
+          throw new Error(err2 || "Error al procesar el archivo (2).");
         }
-        if (msg.includes("The operation was aborted")) {
-          msg = "El servidor tardó demasiado en responder (timeout). Intenta nuevamente.";
-        }
-
-        log.textContent += `❌ Error: ${msg}\n`;
       }
+
+      const blob = await resp.blob();
+      log.textContent += "✅ Archivo procesado correctamente. Iniciando descarga...\n";
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "archivo_procesado.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      estado.textContent = "✅ Descarga iniciada.";
+      estado.style.color = "green";
     });
   </script>
 </body>
