@@ -57,8 +57,9 @@
 <body>
   <!-- ====== Pestañas ====== -->
   <div class="tabs">
-    <div class="tab active" onclick="showTab('fichasClinicas')">FICHAS CLÍNICAS</div>
-    <div class="tab" onclick="showTab('relojControl')">RELOJ CONTROL</div>
+<div class="tab" onclick="showTab('fichasClinicas')">FICHAS CLÍNICAS</div>
+<div class="tab" onclick="showTab('relojControl')">RELOJ CONTROL</div>
+<div class="tab" onclick="showTab('confirmacionCitas')">CONFIRMAR CITAS</div>
   </div>
 
   <!-- ============== FICHAS CLÍNICAS (SIN TOCAR) ============== -->
@@ -490,6 +491,125 @@
       }
     })();
   </script>
+
+<div id="confirmacionCitas" class="tab-content">
+  <h2>CONFIRMAR CITAS - CESFAM Labranza</h2>
+
+  <input type="file" id="fileInput" accept="application/pdf" multiple onchange="subirPDF()" />
+  <button onclick="enviarMensajes()">Enviar mensajes</button>
+
+  <table id="tablaCitas">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Fecha</th>
+        <th>Hora</th>
+        <th>Profesional</th>
+        <th>Estado</th>
+        <th>Respuesta</th>
+        <th>Contador</th>
+      </tr>
+    </thead>
+    <tbody id="tablaBody"></tbody>
+  </table>
+</div>
+
+<script>
+  async function subirPDF() {
+    const input = document.getElementById("fileInput");
+    const files = input.files;
+
+    if (files.length === 0) {
+      alert("Debes seleccionar al menos un archivo PDF.");
+      return;
+    }
+
+    const formData = new FormData();
+    for (const file of files) {
+      formData.append("files", file);
+    }
+
+    try {
+      const res = await fetch("https://<TU_BACKEND>/procesar-pdf", {
+        method: "POST",
+        body: formData
+      });
+
+      if (!res.ok) throw new Error("Error procesando el archivo.");
+      const data = await res.json();
+      cargarTabla(data);
+    } catch (error) {
+      alert("Ocurrió un error al procesar los archivos.");
+      console.error(error);
+    }
+  }
+
+  async function enviarMensajes() {
+    try {
+      const res = await fetch("https://<WEBHOOK_N8N>/enviar", { method: "POST" });
+      if (res.ok) {
+        alert("Mensajes enviados correctamente.");
+      } else {
+        alert("Error al enviar mensajes.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Fallo en la conexión con n8n.");
+    }
+  }
+
+  function cargarTabla(citas) {
+    const tbody = document.getElementById("tablaBody");
+    tbody.innerHTML = "";
+
+    citas.forEach(p => {
+      const tr = document.createElement("tr");
+      tr.className = p.estado.toLowerCase();
+
+      tr.innerHTML = `
+        <td>${p.nombre}</td>
+        <td>${p.fecha}</td>
+        <td>${p.hora}</td>
+        <td>${p.profesional}</td>
+        <td>${p.estado}</td>
+        <td>${p.respuesta || "-"}</td>
+        <td class="contador" id="contador-${p.id}">-</td>
+      `;
+
+      tbody.appendChild(tr);
+      iniciarContador(p.id, p.limite);
+    });
+  }
+
+  function iniciarContador(id, limite) {
+    const el = document.getElementById("contador-" + id);
+    const target = new Date(limite).getTime();
+
+    const interval = setInterval(() => {
+      const now = new Date().getTime();
+      const diff = target - now;
+
+      if (diff <= 0) {
+        el.textContent = "⛔ Finalizado";
+        clearInterval(interval);
+      } else {
+        const h = Math.floor(diff / (1000 * 60 * 60));
+        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        el.textContent = `${h}h ${m}m`;
+      }
+    }, 60000);
+
+    const now = new Date().getTime();
+    const diff = target - now;
+    if (diff > 0) {
+      const h = Math.floor(diff / (1000 * 60 * 60));
+      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      el.textContent = `${h}h ${m}m`;
+    } else {
+      el.textContent = "⛔ Finalizado";
+    }
+  }
+</script>
 
   <!-- ====== Archivos desde Google Drive (lista y descarga automática) ====== -->
   <script>
