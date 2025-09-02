@@ -515,38 +515,39 @@
 </div>
 
 <script>
-  async function subirPDF() {
-    const input = document.getElementById("fileInput");
-    const files = input.files;
+async function subirPDF() {
+  const input = document.getElementById("fileInput");
+  const files = input.files;
 
-    if (files.length === 0) {
-      alert("Debes seleccionar al menos un archivo PDF.");
-      return;
-    }
-
-    const formData = new FormData();
-    for (const file of files) {
-      formData.append("files", file);
-    }
-
-    try {
-      const res = await fetch("https://<TU_BACKEND>/procesar-pdf", {
-        method: "POST",
-        body: formData
-      });
-
-      if (!res.ok) throw new Error("Error procesando el archivo.");
-      const data = await res.json();
-      cargarTabla(data);
-    } catch (error) {
-      alert("Ocurrió un error al procesar los archivos.");
-      console.error(error);
-    }
+  if (files.length === 0) {
+    alert("Debes seleccionar al menos un archivo PDF.");
+    return;
   }
+
+  const formData = new FormData();
+  for (const file of files) {
+    formData.append("files", file);
+  }
+
+  try {
+    const res = await fetch("https://confirmacion-de-horas-backend.onrender.com/procesar", {
+      method: "POST",
+      body: formData
+    });
+
+    if (!res.ok) throw new Error("Error procesando el archivo.");
+    const data = await res.json();
+    cargarTabla(data);
+  } catch (error) {
+    alert("Ocurrió un error al procesar los archivos.");
+    console.error(error);
+  }
+}
+
 
   async function enviarMensajes() {
     try {
-      const res = await fetch("https://<WEBHOOK_N8N>/enviar", { method: "POST" });
+      const res = await fetch("https://n8n.tudominio.com/webhook/enviar-mensajes", { method: "POST" });
       if (res.ok) {
         alert("Mensajes enviados correctamente.");
       } else {
@@ -709,3 +710,4 @@
   </script>
 </body>
 </html>
+
