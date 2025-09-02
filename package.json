@@ -1,0 +1,23 @@
+{
+  "name": "confirmacion-de-horas",
+  "version": "1.0.0",
+  "description": "API backend para procesar archivos PDF de confirmación de horas médicas.",
+  "main": "index.js",
+  "scripts": {
+    "start": "serve ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CesfamLabranza/confirmacion-horas-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CesfamLabranza/confirmacion-horas-backend/issues"
+  },
+  "homepage": "https://github.com/CesfamLabranza/confirmacion-horas-backend#readme",
+  "dependencies": {
+    "serve": "^14.2.4"
+  }
+}
