@@ -530,7 +530,7 @@ async function subirPDF() {
   }
 
   try {
-    const res = await fetch("https://confirmacion-de-horas-backend.onrender.com/procesar", {
+    const res = await fetch("https://confirmacion-de-horas-backend.fly.dev/procesar", {
       method: "POST",
       body: formData
     });
@@ -710,4 +710,5 @@ async function subirPDF() {
   </script>
 </body>
 </html>
+
 
