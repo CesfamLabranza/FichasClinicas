@@ -547,7 +547,7 @@ async function subirPDF() {
 
   async function enviarMensajes() {
     try {
-      const res = await fetch("https://n8n.tudominio.com/webhook/enviar-mensajes", { method: "POST" });
+      const res = await fetch("http://localhost:5678/webhook-test/confirmar-citas", { method: "POST" });
       if (res.ok) {
         alert("Mensajes enviados correctamente.");
       } else {
@@ -710,5 +710,6 @@ async function subirPDF() {
   </script>
 </body>
 </html>
+
 
 
