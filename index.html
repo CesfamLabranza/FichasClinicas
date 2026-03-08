@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>Sistema de Fichas y Control</title>
+  <title>Sistema de Fichas Clínicas</title>
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -45,13 +45,10 @@
 </head>
 
 <body>
-
-  <!-- Pestaña única -->
   <div class="tabs">
     <div class="tab active" onclick="showTab('fichasClinicas')">FICHAS CLÍNICAS</div>
   </div>
 
-  <!-- FICHAS CLÍNICAS -->
   <div id="fichasClinicas" class="tab-content active">
 
     <div class="header-grid">
@@ -90,18 +87,279 @@
       <button class="btn" onclick="openModal('planillaModal')">✏ Editar</button>
     </div>
 
+    <!-- Modal Ver Planilla -->
+    <div id="planillaModal" class="modal">
+      <div class="modal-content">
+        <h3>Ingrese clave para acceder</h3>
+        <input type="password" id="claveAcceso" placeholder="Clave" />
+        <br />
+        <button class="btn" onclick="verificarClave()">Acceder</button>
+        <button class="close-btn" onclick="closeModal('planillaModal')">Cerrar</button>
+      </div>
+    </div>
+
+    <!-- Modal Archivos -->
+    <div id="archivosModal" class="modal">
+      <div class="modal-content" style="max-width: 560px; text-align:left;">
+        <h3 style="text-align:center;">Archivos Disponibles</h3>
+        <div id="estadoArchivos" style="font-size:13px; opacity:.8; margin-bottom:8px;"></div>
+        <ul id="listaArchivos"></ul>
+        <div style="text-align:center; margin-top:12px;">
+          <button class="close-btn" onclick="closeModal('archivosModal')">Cerrar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal APK -->
+    <div id="apkModal" class="modal">
+      <div class="modal-content" style="width: 400px; text-align: left;">
+        <h3 style="text-align: center;">Instrucciones para instalar la APK</h3>
+        <div class="instrucciones">
+          <p>1️⃣ Descarga el archivo APK.</p>
+          <p>2️⃣ Activa la opción "Permitir instalar desde orígenes desconocidos" en tu dispositivo.</p>
+          <p>3️⃣ Instala y disfruta la aplicación.</p>
+        </div>
+        <div style="text-align: center; margin-top: 20px;">
+          <button class="btn" onclick="window.open('https://drive.google.com/uc?export=download&id=1Up8MQiEjR42Xr16vbiGKMvz_ADmItsaj', '_blank')">Descargar APK</button>
+          <button class="close-btn" onclick="closeModal('apkModal')">Cerrar</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
-<script>
-function showTab(tabId) {
-  const tabs = document.querySelectorAll('.tab');
-  const contents = document.querySelectorAll('.tab-content');
-  tabs.forEach(t => t.classList.remove('active'));
-  contents.forEach(c => c.classList.remove('active'));
-  document.querySelector(`.tab[onclick*="${tabId}"]`).classList.add('active');
-  document.getElementById(tabId).classList.add('active');
-}
-</script>
+  <script>
+    function showTab(tabId) {
+      const tabs = document.querySelectorAll('.tab');
+      const contents = document.querySelectorAll('.tab-content');
+      tabs.forEach(t => t.classList.remove('active'));
+      contents.forEach(c => c.classList.remove('active'));
+      document.querySelector(`.tab[onclick*="${tabId}"]`).classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
 
+    const sheetID = "1r4oZdMkehQZmUX87nK8-bxMwxk-3a70XUfYV-V0QaBM";
+    const sheetName = "Hoja 1";
+    const query = encodeURIComponent("SELECT A,B,C,D,E,F,G,H");
+    const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=${sheetName}&tq=${query}`;
+
+    function formatRUT(input) {
+      let value = input.value.replace(/[^0-9kK]/g, '').toUpperCase();
+      if (value.length > 1) {
+        value = value.slice(0, -1).replace(/\B(?=(\d{3})+(?!\d))/g, ".") + '-' + value.slice(-1);
+      }
+      input.value = value;
+      filtrarTabla(value);
+    }
+
+    function openModal(id) {
+      document.getElementById(id).style.display = "flex";
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).style.display = "none";
+    }
+
+    function verificarClave() {
+      const clave = document.getElementById("claveAcceso").value;
+      if (clave === "infolabranza") {
+        window.open("https://drive.google.com/drive/folders/1XKg9Odl_A9QtUHOdsKocgR8qHwTgpCVt?usp=sharing", "_blank");
+        closeModal('planillaModal');
+      } else {
+        alert("Clave incorrecta");
+      }
+    }
+
+    function descargarArchivo(url) {
+      window.open(url, '_blank');
+    }
+
+    function parseFecha(fechaStr) {
+      const partes = String(fechaStr).split("-");
+      if (partes.length !== 3) return null;
+      let [dd, mm, aa] = partes;
+      let year = parseInt(aa);
+      if (isNaN(year)) return null;
+      if (year < 100) year += (year < 25) ? 2000 : 1900;
+      return new Date(year, parseInt(mm) - 1, parseInt(dd));
+    }
+
+    function filtrarTabla(rut) {
+      const filas = document.querySelectorAll("#dataTable tbody tr");
+      filas.forEach(fila => {
+        fila.style.display = fila.cells[1].textContent.includes(rut) ? "" : "none";
+      });
+    }
+
+    fetch(url)
+      .then(res => res.text())
+      .then(rep => {
+        const data = JSON.parse(rep.substr(47).slice(0, -2));
+        const table = document.getElementById("dataTable");
+        const eliminarTable = document.getElementById("eliminarTable");
+        const tbody = document.createElement("tbody");
+        const eliminarBody = document.createElement("tbody");
+
+        const headers = data.table.cols.map(col => `<th>${col.label || ""}</th>`).join('');
+        table.innerHTML = `<thead><tr>${headers}</tr></thead>`;
+        eliminarTable.innerHTML = `<thead><tr>${headers}</tr></thead>`;
+
+        const hoy = new Date();
+        const hace15 = new Date(hoy.getFullYear() - 15, hoy.getMonth(), hoy.getDate());
+        let total = 0, totalEliminar = 0;
+        const conteoPorAno = {};
+
+        data.table.rows.forEach(row => {
+          const cells = row.c.map(cell => `<td>${(cell && (cell.f || cell.v)) || ''}</td>`);
+          const tr = document.createElement("tr");
+          tr.innerHTML = cells.join('');
+          tbody.appendChild(tr);
+          total++;
+
+          const fechaUltima = (row.c[3] && (row.c[3].f || row.c[3].v)) || '';
+          const fechaParsed = parseFecha(fechaUltima);
+
+          if (fechaParsed) {
+            const year = fechaParsed.getFullYear();
+            conteoPorAno[year] = (conteoPorAno[year] || 0) + 1;
+          }
+
+          if (fechaParsed && fechaParsed <= hace15) {
+            const tr2 = document.createElement("tr");
+            tr2.innerHTML = cells.join('');
+            eliminarBody.appendChild(tr2);
+            totalEliminar++;
+          }
+        });
+
+        table.appendChild(tbody);
+        eliminarTable.appendChild(eliminarBody);
+        document.getElementById("totalRegistros").textContent = total;
+        document.getElementById("totalEliminar").textContent = totalEliminar;
+
+        const anosOrdenados = Object.keys(conteoPorAno).sort((a, b) => b - a);
+        document.getElementById("conteoPorAno").textContent =
+          anosOrdenados.map(y => `${y}(${conteoPorAno[y]})`).join(', ');
+
+        const ctx = document.getElementById("graficoAnios").getContext("2d");
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: anosOrdenados,
+            datasets: [{
+              label: 'Registros por Año',
+              data: anosOrdenados.map(y => conteoPorAno[y]),
+              backgroundColor: 'rgba(54, 162, 235, 0.7)'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false
+          }
+        });
+      })
+      .catch(error => {
+        console.error("Error cargando datos de Google Sheets:", error);
+      });
+  </script>
+
+  <script>
+    const apiKey = "AIzaSyDmAlHTd3SeDq8dF_gglAS5TJUc5tgGePk";
+    const FOLDER_ID = "1Z3fZmlekSnD0jxYLzIEymUnbFRRBBRBq";
+
+    async function listarArchivosCarpeta(folderId) {
+      const base = "https://www.googleapis.com/drive/v3/files";
+      const fields = encodeURIComponent("nextPageToken, files(id, name, mimeType, size, modifiedTime)");
+      let pageToken = null;
+      const todos = [];
+
+      do {
+        const q = encodeURIComponent(`'${folderId}' in parents and trashed=false`);
+        const url =
+          `${base}?q=${q}` +
+          `&key=${apiKey}` +
+          `&fields=${fields}` +
+          `&pageSize=1000` +
+          `&supportsAllDrives=true&includeItemsFromAllDrives=true` +
+          (pageToken ? `&pageToken=${pageToken}` : '');
+
+        const res = await fetch(url);
+        if (!res.ok) {
+          const t = await res.text();
+          throw new Error(`Drive API error: ${res.status} ${t}`);
+        }
+
+        const data = await res.json();
+        if (Array.isArray(data.files)) todos.push(...data.files);
+        pageToken = data.nextPageToken || null;
+      } while (pageToken);
+
+      todos.sort((a,b) => (a.name||'').localeCompare(b.name||''));
+      return todos;
+    }
+
+    function humanSize(bytes) {
+      if (!bytes) return '';
+      const n = Number(bytes);
+      if (isNaN(n)) return '';
+      const u = ['B','KB','MB','GB','TB'];
+      let i = 0, val = n;
+      while (val >= 1024 && i < u.length - 1) {
+        val /= 1024;
+        i++;
+      }
+      return `${val.toFixed(val < 10 ? 1 : 0)} ${u[i]}`;
+    }
+
+    async function openArchivosModal() {
+      openModal('archivosModal');
+
+      const estado = document.getElementById('estadoArchivos');
+      const ul = document.getElementById('listaArchivos');
+      ul.innerHTML = '';
+      estado.textContent = 'Cargando archivos...';
+
+      if (!apiKey) {
+        estado.innerHTML = '⚠️ Falta API Key.';
+        return;
+      }
+
+      try {
+        const files = await listarArchivosCarpeta(FOLDER_ID);
+
+        if (!files.length) {
+          estado.textContent = 'No hay archivos en la carpeta o no son públicos.';
+          return;
+        }
+
+        estado.textContent = `Se encontraron ${files.length} archivo(s).`;
+
+        files.forEach(f => {
+          const downloadUrl = `https://drive.google.com/uc?export=download&id=${encodeURIComponent(f.id)}`;
+
+          const li = document.createElement('li');
+          const left = document.createElement('div');
+          const right = document.createElement('div');
+
+          left.textContent = f.name || '(sin nombre)';
+          right.className = 'file-meta';
+
+          const size = humanSize(f.size);
+          const date = f.modifiedTime ? new Date(f.modifiedTime).toLocaleDateString() : '';
+          right.textContent = [size, date].filter(Boolean).join(' · ');
+
+          li.appendChild(left);
+          li.appendChild(right);
+          li.title = 'Descargar';
+          li.onclick = () => window.open(downloadUrl, '_blank');
+
+          ul.appendChild(li);
+        });
+      } catch (err) {
+        console.error(err);
+        estado.textContent = 'Error al listar archivos.';
+      }
+    }
+  </script>
 </body>
 </html>
