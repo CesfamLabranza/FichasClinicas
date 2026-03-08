@@ -169,14 +169,14 @@
     function openModal(id) { document.getElementById(id).style.display = "flex"; }
     function closeModal(id) { document.getElementById(id).style.display = "none"; }
     function verificarClave() {
-      const clave = document.getElementById("claveAcceso").value;
-      if (clave === "infolabranza") {
-        window.open("https://repositorio.saludtemuco.cl/labranza/#3-3-wpfd-top", "_blank");
-        closeModal('planillaModal');
-      } else {
-        alert("Clave incorrecta");
-      }
-    }
+  const clave = document.getElementById("claveAcceso").value;
+  if (clave === "infolabranza") {
+    window.open("https://repositorio.saludtemuco.cl/labranza/#3-3-wpfd-top", "_blank");
+    closeModal('planillaModal');
+  } else {
+    alert("Clave incorrecta");
+  }
+}
     function descargarArchivo(url) { window.open(url, '_blank'); }
 
     fetch(url)
@@ -347,4 +347,5 @@
   </script>
 </body>
 </html>
+
 
