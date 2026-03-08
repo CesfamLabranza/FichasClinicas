@@ -39,12 +39,6 @@
 
     .modal input { width: 80%; padding: 8px; margin-top: 10px; border: 1px solid #ccc; }
     .close-btn { margin-top: 15px; background: red; color: white; padding: 8px 15px; border: none; cursor: pointer; }
-
-    /* Lista Archivos */
-    #listaArchivos { max-height: 250px; overflow-y: auto; padding: 0; margin: 0; text-align: left; }
-    #listaArchivos li { list-style: none; padding: 10px 12px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; justify-content: space-between; gap: 12px; }
-    #listaArchivos li:hover { background-color: #f7f7f7; }
-    .file-meta { font-size: 12px; opacity: .7; white-space: nowrap; }
   </style>
 </head>
 
@@ -94,7 +88,7 @@
     <!-- Botones -->
     <div class="bottom-buttons">
       <button class="btn" onclick="openModal('apkModal')">⬇ Descargar APK</button>
-      <button class="btn" onclick="openArchivosModal()">📁 Archivos</button>
+      <button class="btn" onclick="openRepositorio()">📁 Archivos</button>
       <button class="btn" onclick="openModal('planillaModal')">✏ Editar</button>
     </div>
 
@@ -106,18 +100,6 @@
         <br />
         <button class="btn" onclick="verificarClave()">Acceder</button>
         <button class="close-btn" onclick="closeModal('planillaModal')">Cerrar</button>
-      </div>
-    </div>
-
-    <!-- Modal Archivos (LISTA DINÁMICA DESDE DRIVE) -->
-    <div id="archivosModal" class="modal">
-      <div class="modal-content" style="max-width: 560px; text-align:left;">
-        <h3 style="text-align:center;">Archivos Disponibles</h3>
-        <div id="estadoArchivos" style="font-size:13px; opacity:.8; margin-bottom:8px;"></div>
-        <ul id="listaArchivos"></ul>
-        <div style="text-align:center; margin-top:12px;">
-          <button class="close-btn" onclick="closeModal('archivosModal')">Cerrar</button>
-        </div>
       </div>
     </div>
 
@@ -169,15 +151,19 @@
     function openModal(id) { document.getElementById(id).style.display = "flex"; }
     function closeModal(id) { document.getElementById(id).style.display = "none"; }
     function verificarClave() {
-  const clave = document.getElementById("claveAcceso").value;
-  if (clave === "infolabranza") {
-    window.open("https://repositorio.saludtemuco.cl/labranza/#3-3-wpfd-top", "_blank");
-    closeModal('planillaModal');
-  } else {
-    alert("Clave incorrecta");
-  }
-}
+      const clave = document.getElementById("claveAcceso").value;
+      if (clave === "infolabranza") {
+        window.open("https://drive.google.com/drive/folders/1XKg9Odl_A9QtUHOdsKocgR8qHwTgpCVt?usp=sharing", "_blank");
+        closeModal('planillaModal');
+      } else {
+        alert("Clave incorrecta");
+      }
+    }
     function descargarArchivo(url) { window.open(url, '_blank'); }
+
+    function openRepositorio() {
+      window.open("https://repositorio.saludtemuco.cl/labranza/#3-3-wpfd-top", "_blank");
+    }
 
     fetch(url)
       .then(res => res.text())
@@ -248,104 +234,5 @@
       });
     }
   </script>
-
-  <!-- ====== Archivos desde Google Drive (lista y descarga automática) ====== -->
-  <script>
-    // 🔐 Tu API Key de Google (Drive API habilitada y restringida por HTTP referrer a tu dominio)
-    const apiKey = "AIzaSyDmAlHTd3SeDq8dF_gglAS5TJUc5tgGePk";
-    // 📁 ID de la carpeta
-    const FOLDER_ID = "1Z3fZmlekSnD0jxYLzIEymUnbFRRBBRBq";
-
-    async function listarArchivosCarpeta(folderId) {
-      const base = "https://www.googleapis.com/drive/v3/files";
-      const fields = encodeURIComponent("nextPageToken, files(id, name, mimeType, size, modifiedTime)");
-      let pageToken = null;
-      const todos = [];
-
-      do {
-        const q = encodeURIComponent(`'${folderId}' in parents and trashed=false`);
-        const url =
-          `${base}?q=${q}` +
-          `&key=${apiKey}` +
-          `&fields=${fields}` +
-          `&pageSize=1000` +
-          `&supportsAllDrives=true&includeItemsFromAllDrives=true` +
-          (pageToken ? `&pageToken=${pageToken}` : '');
-
-        const res = await fetch(url);
-        if (!res.ok) {
-          const t = await res.text();
-          throw new Error(`Drive API error: ${res.status} ${t}`);
-        }
-        const data = await res.json();
-        if (Array.isArray(data.files)) todos.push(...data.files);
-        pageToken = data.nextPageToken || null;
-      } while (pageToken);
-
-      todos.sort((a,b) => (a.name||'').localeCompare(b.name||'')); // ordenar por nombre
-      return todos;
-    }
-
-    function humanSize(bytes) {
-      if (!bytes) return '';
-      const n = Number(bytes);
-      if (isNaN(n)) return '';
-      const u = ['B','KB','MB','GB','TB'];
-      let i = 0, val = n;
-      while (val >= 1024 && i < u.length-1) { val/=1024; i++; }
-      return `${val.toFixed(val<10?1:0)} ${u[i]}`;
-    }
-
-    async function openArchivosModal() {
-      openModal('archivosModal');
-
-      const estado = document.getElementById('estadoArchivos');
-      const ul = document.getElementById('listaArchivos');
-      ul.innerHTML = '';
-      estado.textContent = 'Cargando archivos...';
-
-      if (!apiKey) {
-        estado.innerHTML = '⚠️ Falta API Key. Configura tu clave de Google Drive API y restringe por <b>HTTP referrer</b>.';
-        return;
-      }
-
-      try {
-        const files = await listarArchivosCarpeta(FOLDER_ID);
-        if (!files.length) {
-          estado.textContent = 'No hay archivos en la carpeta o no son públicos.';
-          return;
-        }
-        estado.textContent = `Se encontraron ${files.length} archivo(s).`;
-
-        files.forEach(f => {
-          // Enlace de descarga directa
-          const downloadUrl = `https://drive.google.com/uc?export=download&id=${encodeURIComponent(f.id)}`;
-
-          const li = document.createElement('li');
-          const left = document.createElement('div');
-          const right = document.createElement('div');
-
-          left.textContent = f.name || '(sin nombre)';
-          right.className = 'file-meta';
-          const size = humanSize(f.size);
-          const date = f.modifiedTime ? new Date(f.modifiedTime).toLocaleDateString() : '';
-          right.textContent = [size, date].filter(Boolean).join(' · ');
-
-          li.appendChild(left);
-          li.appendChild(right);
-
-          li.title = 'Descargar';
-          li.onclick = () => window.open(downloadUrl, '_blank');
-
-          ul.appendChild(li);
-        });
-      } catch (err) {
-        console.error(err);
-        estado.textContent = 'Error al listar archivos. Revisa la API Key, permisos de la carpeta y la consola del navegador.';
-      }
-    }
-  </script>
 </body>
 </html>
-
-
