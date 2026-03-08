@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>Sistema de Fichas Clínicas</title>
+  <title>Sistema de Fichas y Control</title>
 
-  <!-- Chart.js -->
+  <!-- Chart.js (Fichas Clínicas) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
@@ -15,6 +15,7 @@
     .tab-content { display: none; padding: 20px; }
     .tab-content.active { display: block; }
 
+    /* ===== Estilos FICHAS CLÍNICAS ===== */
     .header-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 15px; }
     .title-search { display: flex; align-items: center; gap: 15px; }
     .title-search input { padding: 8px; width: 300px; font-size: 16px; border: 2px solid #333; }
@@ -32,11 +33,14 @@
     .btn { background: #4285F4; color: white; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: 0.3s; }
     .btn:hover { background: #3367d6; transform: scale(1.05); }
 
+    /* Modales */
     .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
     .modal-content { background: #fff; padding: 20px; border-radius: 8px; text-align: center; width: 350px; }
+
     .modal input { width: 80%; padding: 8px; margin-top: 10px; border: 1px solid #ccc; }
     .close-btn { margin-top: 15px; background: red; color: white; padding: 8px 15px; border: none; cursor: pointer; }
 
+    /* Lista Archivos */
     #listaArchivos { max-height: 250px; overflow-y: auto; padding: 0; margin: 0; text-align: left; }
     #listaArchivos li { list-style: none; padding: 10px 12px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; justify-content: space-between; gap: 12px; }
     #listaArchivos li:hover { background-color: #f7f7f7; }
@@ -45,18 +49,22 @@
 </head>
 
 <body>
+  <!-- ====== Pestañas ====== -->
   <div class="tabs">
-    <div class="tab active" onclick="showTab('fichasClinicas')">FICHAS CLÍNICAS</div>
+    <div class="tab" onclick="showTab('fichasClinicas')">FICHAS CLÍNICAS</div>
   </div>
 
+  <!-- ============== FICHAS CLÍNICAS (SIN TOCAR) ============== -->
   <div id="fichasClinicas" class="tab-content active">
 
+    <!-- Encabezado -->
     <div class="header-grid">
       <div class="title-search">
         <h2>Buscar por RUT</h2>
         <input type="text" id="searchInput" placeholder="Ej: 12.345.678-K" oninput="formatRUT(this)">
       </div>
 
+      <!-- Cantidades + Gráfico -->
       <div class="stats-chart">
         <div class="stats-box">
           <h3>📌 Cantidades</h3>
@@ -72,15 +80,18 @@
       </div>
     </div>
 
+    <!-- Tabla principal -->
     <div class="table-container">
       <table id="dataTable"></table>
     </div>
 
+    <!-- Tabla eliminar -->
     <h3>Registros con más de 15 años sin atención:</h3>
     <div class="table-container">
       <table id="eliminarTable"></table>
     </div>
 
+    <!-- Botones -->
     <div class="bottom-buttons">
       <button class="btn" onclick="openModal('apkModal')">⬇ Descargar APK</button>
       <button class="btn" onclick="openArchivosModal()">📁 Archivos</button>
@@ -98,7 +109,7 @@
       </div>
     </div>
 
-    <!-- Modal Archivos -->
+    <!-- Modal Archivos (LISTA DINÁMICA DESDE DRIVE) -->
     <div id="archivosModal" class="modal">
       <div class="modal-content" style="max-width: 560px; text-align:left;">
         <h3 style="text-align:center;">Archivos Disponibles</h3>
@@ -115,9 +126,9 @@
       <div class="modal-content" style="width: 400px; text-align: left;">
         <h3 style="text-align: center;">Instrucciones para instalar la APK</h3>
         <div class="instrucciones">
-          <p>1️⃣ Descarga el archivo APK.</p>
-          <p>2️⃣ Activa la opción "Permitir instalar desde orígenes desconocidos" en tu dispositivo.</p>
-          <p>3️⃣ Instala y disfruta la aplicación.</p>
+          <p><span class="badge">1️⃣</span> Descarga el archivo APK.</p>
+          <p><span class="badge">2️⃣</span> Activa la opción "Permitir instalar desde orígenes desconocidos" en tu dispositivo.</p>
+          <p><span class="badge">3️⃣</span> Instala y disfruta la aplicación.</p>
         </div>
         <div style="text-align: center; margin-top: 20px;">
           <button class="btn" onclick="window.open('https://drive.google.com/uc?export=download&id=1Up8MQiEjR42Xr16vbiGKMvz_ADmItsaj', '_blank')">Descargar APK</button>
@@ -127,8 +138,11 @@
     </div>
 
   </div>
+  <!-- ===== FIN FICHAS CLÍNICAS ===== -->
 
+  <!-- ======= Scripts globales ======= -->
   <script>
+    // Tabs
     function showTab(tabId) {
       const tabs = document.querySelectorAll('.tab');
       const contents = document.querySelectorAll('.tab-content');
@@ -138,6 +152,7 @@
       document.getElementById(tabId).classList.add('active');
     }
 
+    // ====== FICHAS CLÍNICAS (SIN TOCAR) ======
     const sheetID = "1r4oZdMkehQZmUX87nK8-bxMwxk-3a70XUfYV-V0QaBM";
     const sheetName = "Hoja 1";
     const query = encodeURIComponent("SELECT A,B,C,D,E,F,G,H");
@@ -151,15 +166,8 @@
       input.value = value;
       filtrarTabla(value);
     }
-
-    function openModal(id) {
-      document.getElementById(id).style.display = "flex";
-    }
-
-    function closeModal(id) {
-      document.getElementById(id).style.display = "none";
-    }
-
+    function openModal(id) { document.getElementById(id).style.display = "flex"; }
+    function closeModal(id) { document.getElementById(id).style.display = "none"; }
     function verificarClave() {
       const clave = document.getElementById("claveAcceso").value;
       if (clave === "infolabranza") {
@@ -169,27 +177,7 @@
         alert("Clave incorrecta");
       }
     }
-
-    function descargarArchivo(url) {
-      window.open(url, '_blank');
-    }
-
-    function parseFecha(fechaStr) {
-      const partes = String(fechaStr).split("-");
-      if (partes.length !== 3) return null;
-      let [dd, mm, aa] = partes;
-      let year = parseInt(aa);
-      if (isNaN(year)) return null;
-      if (year < 100) year += (year < 25) ? 2000 : 1900;
-      return new Date(year, parseInt(mm) - 1, parseInt(dd));
-    }
-
-    function filtrarTabla(rut) {
-      const filas = document.querySelectorAll("#dataTable tbody tr");
-      filas.forEach(fila => {
-        fila.style.display = fila.cells[1].textContent.includes(rut) ? "" : "none";
-      });
-    }
+    function descargarArchivo(url) { window.open(url, '_blank'); }
 
     fetch(url)
       .then(res => res.text())
@@ -218,12 +206,10 @@
 
           const fechaUltima = (row.c[3] && (row.c[3].f || row.c[3].v)) || '';
           const fechaParsed = parseFecha(fechaUltima);
-
           if (fechaParsed) {
             const year = fechaParsed.getFullYear();
             conteoPorAno[year] = (conteoPorAno[year] || 0) + 1;
           }
-
           if (fechaParsed && fechaParsed <= hace15) {
             const tr2 = document.createElement("tr");
             tr2.innerHTML = cells.join('');
@@ -236,35 +222,38 @@
         eliminarTable.appendChild(eliminarBody);
         document.getElementById("totalRegistros").textContent = total;
         document.getElementById("totalEliminar").textContent = totalEliminar;
-
         const anosOrdenados = Object.keys(conteoPorAno).sort((a, b) => b - a);
-        document.getElementById("conteoPorAno").textContent =
-          anosOrdenados.map(y => `${y}(${conteoPorAno[y]})`).join(', ');
+        document.getElementById("conteoPorAno").textContent = anosOrdenados.map(y => `${y}(${conteoPorAno[y]})`).join(', ');
 
         const ctx = document.getElementById("graficoAnios").getContext("2d");
         new Chart(ctx, {
           type: 'bar',
-          data: {
-            labels: anosOrdenados,
-            datasets: [{
-              label: 'Registros por Año',
-              data: anosOrdenados.map(y => conteoPorAno[y]),
-              backgroundColor: 'rgba(54, 162, 235, 0.7)'
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false
-          }
+          data: { labels: anosOrdenados, datasets: [{ label: 'Registros por Año', data: anosOrdenados.map(y => conteoPorAno[y]), backgroundColor: 'rgba(54, 162, 235, 0.7)' }] },
+          options: { responsive: true, maintainAspectRatio: false }
         });
-      })
-      .catch(error => {
-        console.error("Error cargando datos de Google Sheets:", error);
       });
+
+    function parseFecha(fechaStr) {
+      const partes = fechaStr.split("-");
+      if (partes.length !== 3) return null;
+      let [dd, mm, aa] = partes;
+      let year = parseInt(aa);
+      if (year < 100) year += (year < 25) ? 2000 : 1900;
+      return new Date(year, parseInt(mm) - 1, parseInt(dd));
+    }
+    function filtrarTabla(rut) {
+      const filas = document.querySelectorAll("#dataTable tbody tr");
+      filas.forEach(fila => {
+        fila.style.display = fila.cells[1].textContent.includes(rut) ? "" : "none";
+      });
+    }
   </script>
 
+  <!-- ====== Archivos desde Google Drive (lista y descarga automática) ====== -->
   <script>
+    // 🔐 Tu API Key de Google (Drive API habilitada y restringida por HTTP referrer a tu dominio)
     const apiKey = "AIzaSyDmAlHTd3SeDq8dF_gglAS5TJUc5tgGePk";
+    // 📁 ID de la carpeta
     const FOLDER_ID = "1Z3fZmlekSnD0jxYLzIEymUnbFRRBBRBq";
 
     async function listarArchivosCarpeta(folderId) {
@@ -288,13 +277,12 @@
           const t = await res.text();
           throw new Error(`Drive API error: ${res.status} ${t}`);
         }
-
         const data = await res.json();
         if (Array.isArray(data.files)) todos.push(...data.files);
         pageToken = data.nextPageToken || null;
       } while (pageToken);
 
-      todos.sort((a,b) => (a.name||'').localeCompare(b.name||''));
+      todos.sort((a,b) => (a.name||'').localeCompare(b.name||'')); // ordenar por nombre
       return todos;
     }
 
@@ -304,11 +292,8 @@
       if (isNaN(n)) return '';
       const u = ['B','KB','MB','GB','TB'];
       let i = 0, val = n;
-      while (val >= 1024 && i < u.length - 1) {
-        val /= 1024;
-        i++;
-      }
-      return `${val.toFixed(val < 10 ? 1 : 0)} ${u[i]}`;
+      while (val >= 1024 && i < u.length-1) { val/=1024; i++; }
+      return `${val.toFixed(val<10?1:0)} ${u[i]}`;
     }
 
     async function openArchivosModal() {
@@ -320,21 +305,20 @@
       estado.textContent = 'Cargando archivos...';
 
       if (!apiKey) {
-        estado.innerHTML = '⚠️ Falta API Key.';
+        estado.innerHTML = '⚠️ Falta API Key. Configura tu clave de Google Drive API y restringe por <b>HTTP referrer</b>.';
         return;
       }
 
       try {
         const files = await listarArchivosCarpeta(FOLDER_ID);
-
         if (!files.length) {
           estado.textContent = 'No hay archivos en la carpeta o no son públicos.';
           return;
         }
-
         estado.textContent = `Se encontraron ${files.length} archivo(s).`;
 
         files.forEach(f => {
+          // Enlace de descarga directa
           const downloadUrl = `https://drive.google.com/uc?export=download&id=${encodeURIComponent(f.id)}`;
 
           const li = document.createElement('li');
@@ -343,13 +327,13 @@
 
           left.textContent = f.name || '(sin nombre)';
           right.className = 'file-meta';
-
           const size = humanSize(f.size);
           const date = f.modifiedTime ? new Date(f.modifiedTime).toLocaleDateString() : '';
           right.textContent = [size, date].filter(Boolean).join(' · ');
 
           li.appendChild(left);
           li.appendChild(right);
+
           li.title = 'Descargar';
           li.onclick = () => window.open(downloadUrl, '_blank');
 
@@ -357,7 +341,7 @@
         });
       } catch (err) {
         console.error(err);
-        estado.textContent = 'Error al listar archivos.';
+        estado.textContent = 'Error al listar archivos. Revisa la API Key, permisos de la carpeta y la consola del navegador.';
       }
     }
   </script>
